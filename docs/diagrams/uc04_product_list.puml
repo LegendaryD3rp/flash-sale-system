@@ -1,0 +1,19 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "ProductController" as ctrl
+participant "ProductServiceImpl" as svc
+participant "ProductMapper" as mapper
+database MySQL as db
+
+user -> gw: 1 GET /api/product?page=1&size=10&category=xxx
+gw -> ctrl: 2 JWT放行(透传X-User-Role)
+ctrl -> svc: 3 listProducts(page,size,category)
+svc -> svc: 4 角色判定 CUSTOMER只看上架
+svc -> mapper: 5 分页+条件查询
+mapper -> db
+db --> mapper: IPage<Product>
+svc --> ctrl: 6 IPage<ProductVO>
+ctrl --> gw: 7 Result<IPage>
+gw --> user: 8 {code:0, data:{records, total, page}}
+@enduml

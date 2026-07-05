@@ -1,0 +1,16 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "SeckillController" as ctrl
+participant "SeckillActServiceImpl" as svc
+database MySQL as db
+
+user -> gw: 1 GET /api/seckill/activity/{id}
+gw -> ctrl: 2 JWT放行
+ctrl -> svc: 3 getActivityDetail(id)
+svc -> db: 4 查活动+关联商品
+db --> svc
+svc --> ctrl: 5 ActivityDetailVO
+ctrl --> gw
+gw --> user: 6 {code:0, data:detail}
+@enduml

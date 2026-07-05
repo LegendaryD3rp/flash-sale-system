@@ -1,0 +1,20 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ai-service
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# DeepSeek API Configuration
+deepseek:
+  api-key: sk-0ca8fc1f00cf420c9ce7420433f5e9c1
+  base-url: https://api.deepseek.com
+  model: deepseek-chat
+  max-tokens: 500
+  temperature: 0.7

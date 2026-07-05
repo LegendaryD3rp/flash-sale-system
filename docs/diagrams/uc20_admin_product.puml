@@ -1,0 +1,30 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "ProductController" as ctrl
+participant "ProductServiceImpl" as svc
+database MySQL as db
+
+== 新增商品 ==
+admin -> gw: POST /api/product\n{name,desc,price,SKU列表,图片}
+gw -> ctrl: JWT认证(ADMIN角色)
+ctrl -> svc: createProduct(req)
+svc -> db: INSERT product + SKU + image
+note right: @Transactional
+db --> svc
+ctrl --> gw
+gw --> admin: {code:0, data:productId}
+
+== 编辑商品 ==
+admin -> gw: PUT /api/product/{id}
+ctrl -> svc: updateProduct(id, req)
+svc -> db: UPDATE + SKU先删后插
+svc -> svc: 清除Redis缓存
+gw --> admin: {code:0}
+
+== 删除(下架) ==
+admin -> gw: DELETE /api/product/{id}
+ctrl -> svc: deleteProduct(id)
+svc -> db: UPDATE status=OFF
+gw --> admin: {code:0}
+@enduml

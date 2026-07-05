@@ -1,0 +1,20 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "CouponController" as ctrl
+participant "CouponServiceImpl" as svc
+database MySQL as db
+
+user -> gw: 1 POST /api/coupon/claim/{couponId}
+gw -> ctrl: 2 JWT认证
+ctrl -> svc: 3 claimCoupon(userId, couponId)
+svc -> db: 4 校验优惠券时间/库存
+db --> svc
+svc -> db: 5 UPDATE taken=taken+1
+db --> svc
+svc -> db: 6 INSERT user_coupon
+db --> svc
+svc --> ctrl: 7 UserCouponVO
+ctrl --> gw
+gw --> user: 8 {code:0, data:vo}
+@enduml

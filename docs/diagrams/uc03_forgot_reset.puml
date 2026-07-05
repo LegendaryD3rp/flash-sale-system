@@ -1,0 +1,36 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "UserController" as ctrl
+participant "UserServiceImpl" as svc
+participant "UserMapper" as mapper
+database MySQL as db
+database Redis as redis
+
+== 忘记密码 ==
+user -> gw: 1 POST /api/user/forgot-password\n{username, email}
+gw -> ctrl: 2 白名单放行
+ctrl -> svc: 3 forgotPassword()
+svc -> mapper: 4 校验用户名+邮箱
+mapper -> db
+db --> mapper
+svc -> redis: 5 生成UUID token 存入Redis(30min)
+svc --> ctrl: 6 token
+ctrl --> gw: 7 Result<String>
+gw --> user: 8 {code:0, data:token}
+
+== 重置密码 ==
+user -> gw: 9 POST /api/user/reset-password\n{token, newPassword}
+gw -> ctrl: 10 白名单放行
+ctrl -> svc: 11 resetPassword()
+svc -> redis: 12 校验token
+redis --> svc
+svc -> svc: 13 BCrypt新密码
+svc -> mapper: 14 UPDATE password
+mapper -> db
+db --> mapper
+svc -> redis: 15 删除token
+svc --> ctrl: 16 success
+ctrl --> gw
+gw --> user: 17 {code:0}
+@enduml

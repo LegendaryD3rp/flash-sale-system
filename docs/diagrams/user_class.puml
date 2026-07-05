@@ -1,0 +1,126 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "用户服务 - 类图" {
+
+  interface "UserService" as usvc <<interface>> {
+    +register(req: RegisterReq): Long
+    +login(req: LoginReq): LoginResp
+    +getUserById(userId: Long): UserVO
+    +updateProfile(userId: Long, req: ProfileUpdateReq): void
+    +updatePassword(userId: Long, req: PasswordUpdateReq): void
+    +forgotPassword(username: String, email: String): String
+    +resetPassword(token: String, newPassword: String): void
+    +adminListUsers(page: int, size: int): IPage<AdminUserVO>
+    +adminGetUserById(id: Long): AdminUserVO
+    +adminUpdateUser(id: Long, req: AdminUpdateUserReq): void
+    +adminDisableUser(id: Long): void
+  }
+
+  class UserServiceImpl {
+    -userMapper: UserMapper
+    -passwordEncoder: BCryptPasswordEncoder
+    -redisTemplate: StringRedisTemplate
+    -jwtSecret: String
+    -jwtExpiration: long
+    +register(req: RegisterReq): Long
+    +login(req: LoginReq): LoginResp
+    +getUserById(userId: Long): UserVO
+    +updateProfile(userId: Long, req: ProfileUpdateReq): void
+    +updatePassword(userId: Long, req: PasswordUpdateReq): void
+    +forgotPassword(username: String, email: String): String
+    +resetPassword(token: String, newPassword: String): void
+    +adminListUsers(page: int, size: int): IPage<AdminUserVO>
+    +adminGetUserById(id: Long): AdminUserVO
+    +adminUpdateUser(id: Long, req: AdminUpdateUserReq): void
+    +adminDisableUser(id: Long): void
+  }
+
+  class UserController {
+    -userService: UserService
+    +register(req: RegisterReq): Result<Long>
+    +login(req: LoginReq): Result<LoginResp>
+    +me(userId: Long): Result<UserVO>
+    +updateProfile(userId: Long, req: ProfileUpdateReq): Result<Void>
+    +updatePassword(userId: Long, req: PasswordUpdateReq): Result<Void>
+    +forgotPassword(req: ForgotPasswordReq): Result<String>
+    +resetPassword(req: ResetPasswordReq): Result<Void>
+  }
+
+  class AddressController {
+    +listAddresses(userId: Long): Result<List<Address>>
+    +addAddress(userId: Long, req: AddressReq): Result<Address>
+    +updateAddress(userId: Long, id: Long, req: AddressReq): Result<Address>
+    +deleteAddress(userId: Long, id: Long): Result<Void>
+    +setDefault(userId: Long, id: Long): Result<Void>
+  }
+
+  class AdminUserController {
+    +listUsers(role: String, page: int, size: int): Result<IPage<AdminUserVO>>
+    +getUserById(role: String, id: Long): Result<AdminUserVO>
+    +updateUser(role: String, id: Long, req: AdminUpdateUserReq): Result<Void>
+    +disableUser(role: String, id: Long): Result<Void>
+  }
+
+  class AdminAuditLogController {
+    +list(role: String, page: int, size: int, action: String, targetType: String): Result<IPage<AuditLog>>
+  }
+
+  interface "AddressService" as addrsvc <<interface>> {
+  }
+
+  class UserMapper
+  class AddressMapper
+  class AuditLogMapper
+
+  class User {
+    -id: Long
+    -username: String
+    -nickname: String
+    -password: String
+    -email: String
+    -role: String
+    -phone: String
+    -status: String
+    -createdAt: LocalDateTime
+    -updatedAt: LocalDateTime
+  }
+
+  class Address {
+    -id: Long
+    -userId: Long
+    -receiverName: String
+    -receiverPhone: String
+    -province: String
+    -city: String
+    -district: String
+    -detail: String
+    -isDefault: Boolean
+  }
+
+  class AuditLog {
+    -id: Long
+    -adminId: Long
+    -username: String
+    -action: String
+    -targetType: String
+    -targetId: Long
+    -detail: String
+    -ip: String
+    -createdAt: LocalDateTime
+  }
+
+}
+
+UserController --> UserService
+UserServiceImpl ..|> UserService
+UserServiceImpl --> UserMapper
+UserServiceImpl --> StringRedisTemplate
+UserServiceImpl --> BCryptPasswordEncoder
+AddressController --> AddressService
+AdminUserController --> UserService
+AdminAuditLogController --> AuditLogMapper
+UserMapper --> User
+AddressMapper --> Address
+
+@enduml

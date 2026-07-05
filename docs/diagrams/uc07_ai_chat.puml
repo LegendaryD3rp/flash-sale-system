@@ -1,0 +1,21 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "AiController" as ctrl
+participant "AiServiceImpl" as svc
+participant "DeepSeek API" as api
+
+user -> gw: 1 POST /api/ai/chat\n{message, history}
+gw -> ctrl: 2 JWT放行
+ctrl -> svc: 3 chat(message, history)
+svc -> svc: 4 构造请求体(system prompt+history+message)
+svc -> api: 5 POST DeepSeek API
+api --> svc: 6 API响应
+alt 成功
+  svc --> ctrl: 7 reply
+else 异常
+  svc --> ctrl: 8 友好提示
+end
+ctrl --> gw
+gw --> user: 9 {code:0, data:{reply}}
+@enduml

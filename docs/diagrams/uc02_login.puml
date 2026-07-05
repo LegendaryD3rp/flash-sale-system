@@ -1,0 +1,20 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "UserController" as ctrl
+participant "UserServiceImpl" as svc
+participant "UserMapper" as mapper
+database MySQL as db
+
+user -> gw: 1 POST /api/user/login\n{username, password}
+gw -> ctrl: 2 白名单放行
+ctrl -> svc: 3 login(req)
+svc -> mapper: 4 按用户名查询用户
+mapper -> db
+db --> mapper: User实体
+svc -> svc: 5 BCrypt密码比对
+svc -> svc: 6 生成JWT(含userId,role,7天)
+svc --> ctrl: 7 LoginResp(token)
+ctrl --> gw: 8 Result<LoginResp>
+gw --> user: 9 {code:0, data:{token}}
+@enduml

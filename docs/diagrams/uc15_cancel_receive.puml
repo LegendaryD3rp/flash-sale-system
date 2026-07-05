@@ -1,0 +1,24 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "OrderController" as ctrl
+participant "OrderServiceImpl" as svc
+database MySQL as db
+
+== 取消订单 ==
+user -> gw: POST /api/order/{id}/cancel
+gw -> ctrl: JWT认证
+ctrl -> svc: cancelOrder(orderId, userId)
+svc -> db: UPDATE status=CANCELLED
+db --> svc
+ctrl --> gw
+gw --> user: {code:0}
+
+== 确认收货 ==
+user -> gw: POST /api/order/{id}/receive
+ctrl -> svc: receiveOrder(orderId, userId)
+svc -> db: UPDATE status=RECEIVED
+db --> svc
+ctrl --> gw
+gw --> user: {code:0}
+@enduml

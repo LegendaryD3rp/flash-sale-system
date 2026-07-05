@@ -1,0 +1,29 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "SeckillActivityController" as ctrl
+participant "SeckillActServiceImpl" as svc
+database MySQL as db
+database Redis as redis
+
+== CRUD秒杀活动 ==
+admin -> gw: POST /api/seckill/admin/activity\n{productId,price,startTime...}
+gw -> ctrl: JWT认证(ADMIN)
+ctrl -> svc: createActivity(req)
+svc -> db: INSERT seckill_activity
+db --> svc
+gw --> admin: {code:0}
+
+== 启用/结束 ==
+admin -> gw: PATCH /api/seckill/admin/activity/{id}/status
+ctrl -> svc: updateStatus(id, status)
+svc -> db: UPDATE status
+svc -> redis: 缓存预热/清除
+gw --> admin: {code:0}
+
+== 预热 ==
+admin -> gw: POST /api/seckill/admin/activity/{id}/warmup
+ctrl -> svc: warmUp(id)
+svc -> redis: 预加载活动信息+库存
+gw --> admin: {code:0}
+@enduml

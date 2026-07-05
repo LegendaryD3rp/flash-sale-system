@@ -1,0 +1,45 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: seckill-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/flashsale?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3s
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.flashsale.seckillservice.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Seckill MQ Queue Configuration
+seckill:
+  mq:
+    exchange: seckill.order.exchange
+    queue: seckill.order.queue
+    routing-key: seckill.order.create
+    dlq: seckill.order.dlq
+    dlx: seckill.order.dlx
+
+logging:
+  level:
+    com.flashsale: DEBUG

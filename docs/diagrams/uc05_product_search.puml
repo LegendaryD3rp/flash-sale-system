@@ -1,0 +1,18 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "ProductController" as ctrl
+participant "ProductServiceImpl" as svc
+participant "ProductMapper" as mapper
+database MySQL as db
+
+user -> gw: 1 GET /api/product/search?keyword=手机&page=1
+gw -> ctrl: 2 JWT放行
+ctrl -> svc: 3 search(keyword, page)
+svc -> mapper: 4 name LIKE + description LIKE
+mapper -> db
+db --> mapper
+svc --> ctrl: 5 IPage<ProductVO>
+ctrl --> gw
+gw --> user: 6 {code:0, data:{records}}
+@enduml

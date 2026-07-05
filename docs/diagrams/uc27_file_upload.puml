@@ -1,0 +1,14 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "UploadController" as ctrl
+participant "文件系统" as fs
+
+admin -> gw: 1 POST /api/upload (multipart file)
+gw -> ctrl: 2 JWT认证(ADMIN角色)
+ctrl -> ctrl: 3 校验文件格式 jpg/jpeg/png/gif/webp/bmp
+ctrl -> fs: 4 保存到 ./uploads/{uuid}.{ext}
+ctrl --> gw: 5 URL路径 /uploads/{uuid}.{ext}
+gw --> admin: 6 {code:0, data:url}
+note right: 文件通过Gateway\nStaticResourceConfig\n提供静态访问
+@enduml

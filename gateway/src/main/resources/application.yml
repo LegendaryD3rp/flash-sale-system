@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3s
+
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/user/**, /api/address/**, /api/admin/user/**, /api/admin/audit-log/**
+
+        - id: product-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/product/**, /api/upload/**
+
+        - id: seckill-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/seckill/**
+
+        - id: order-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/order/**, /api/order, /api/admin/order/**, /api/cart/**, /api/coupon/**, /api/admin/coupon/**, /api/admin/statistics/**
+
+        - id: seckill-service-ws
+          uri: http://localhost:8085
+          predicates:
+            - Path=/ws/**
+
+        - id: ai-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/ai/**
+
+# JWT Configuration (must match user-service)
+jwt:
+  secret: FlashSaleSecretKey2026MustBeAtLeast256BitsLongForHS256Algorithm!!
+  expiration: 604800000  # 7 days
+
+# Auth whitelist — paths that don't require JWT
+gateway:
+  auth:
+    whitelist: POST:/api/user/login,POST:/api/user/register,GET:/api/product,GET:/api/seckill/activity,POST:/api/ai/chat,POST:/api/user/forgot-password,POST:/api/user/reset-password,GET:/api/product/*/reviews
+  rate-limit:
+    # General rate limit: capacity=2000, refill=500/sec
+    capacity: 2000
+    refill-rate: 500
+    # Seckill-specific rate limit: capacity=500, refill=200/sec
+    seckill-capacity: 500
+    seckill-refill-rate: 200
+
+logging:
+  level:
+    com.flashsale: DEBUG

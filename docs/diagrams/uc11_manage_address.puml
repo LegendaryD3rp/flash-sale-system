@@ -1,0 +1,39 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "AddressController" as ctrl
+participant "AddressServiceImpl" as svc
+database MySQL as db
+
+== 新增地址 ==
+user -> gw: POST /api/address\n{receiver, phone, province...}
+gw -> ctrl: JWT认证
+ctrl -> svc: addAddress(userId, req)
+alt 第一个地址
+  svc -> svc: 自动设为默认
+end
+svc -> db: INSERT
+db --> svc
+ctrl --> gw: Result<Address>
+gw --> user
+
+== 设为默认 ==
+user -> gw: PUT /api/address/{id}/default
+gw -> ctrl: JWT认证
+ctrl -> svc: setDefault(userId, id)
+svc -> db: 清除原默认 设为新默认
+db --> svc
+ctrl --> gw
+gw --> user: {code:0}
+
+== 删除地址 ==
+user -> gw: DELETE /api/address/{id}
+gw -> ctrl: JWT认证
+ctrl -> svc: deleteAddress(userId, id)
+svc -> db: DELETE WHERE id AND user_id
+db --> svc
+alt 删的是默认地址
+  svc -> db: 将最近的设为默认
+end
+gw --> user: {code:0}
+@enduml

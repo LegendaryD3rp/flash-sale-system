@@ -1,0 +1,16 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "AdminAuditLogController" as ctrl
+participant "AuditLogMapper" as mapper
+database MySQL as db
+
+admin -> gw: GET /api/admin/audit-log?page=1\&action=xxx
+gw -> ctrl: JWT认证(ADMIN)
+ctrl -> mapper: 1 分页查询审计日志(按时间倒序)
+mapper -> db
+db --> mapper: IPage<AuditLog>
+ctrl --> gw: 2 IPage<AuditLog>
+gw --> admin: 3 {code:0, data:{records}}
+note right: 审计日志通过AOP\n@AuditLog注解\n自动记录
+@enduml

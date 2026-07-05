@@ -1,0 +1,25 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "UserController" as ctrl
+participant "UserServiceImpl" as svc
+participant "UserMapper" as mapper
+database MySQL as db
+
+user -> gw: 1 POST /api/user/register\n{username, password, email}
+gw -> ctrl: 2 白名单放行(无需Token)
+ctrl -> svc: 3 register(req)
+svc -> mapper: 4 校验用户名唯一 selectCount(username)
+mapper -> db
+db --> mapper
+svc -> mapper: 5 校验邮箱唯一 selectCount(email)
+mapper -> db
+db --> mapper
+svc -> svc: 6 BCrypt加密密码
+svc -> mapper: 7 INSERT user
+mapper -> db
+db --> mapper
+svc --> ctrl: 8 返回userId
+ctrl --> gw: 9 Result<Long>
+gw --> user: 10 {code:0, data:userId}
+@enduml

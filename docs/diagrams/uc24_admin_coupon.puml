@@ -1,0 +1,29 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "CouponController" as ctrl
+participant "CouponServiceImpl" as svc
+database MySQL as db
+
+== 新建优惠券 ==
+admin -> gw: POST /api/admin/coupon\n{name,type,discount,stock...}
+gw -> ctrl: JWT认证(ADMIN)
+ctrl -> svc: createCoupon(req)
+svc -> db: INSERT coupon
+db --> svc
+ctrl --> gw
+gw --> admin: {code:0}
+
+== 下架优惠券 ==
+admin -> gw: PUT /api/admin/coupon/{id}/disable
+ctrl -> svc: disableCoupon(id)
+svc -> db: UPDATE status=DISABLED
+db --> svc
+gw --> admin: {code:0}
+
+== 查询 ==
+admin -> gw: GET /api/admin/coupon/list
+ctrl -> svc: listCoupons(page)
+svc -> db: 分页查询
+gw --> admin: {code:0, data:{records}}
+@enduml

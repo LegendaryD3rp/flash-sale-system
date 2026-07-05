@@ -1,0 +1,138 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "订单服务 - 类图" {
+
+  interface "OrderService" as osvc <<interface>> {
+    +listUserOrders(userId: Long, page: int, size: int): IPage<OrderVO>
+    +getOrderById(orderId: Long): OrderVO
+    +listAllOrders(page: int, size: int, status: String): IPage<OrderVO>
+    +cancelOrder(orderId: Long, userId: Long): void
+    +receiveOrder(orderId: Long, userId: Long): void
+    +shipOrder(orderId: Long): void
+  }
+
+  class OrderServiceImpl {
+    -orderMapper: OrderMapper
+    +listUserOrders(userId: Long, page: int, size: int): IPage<OrderVO>
+    +getOrderById(orderId: Long): OrderVO
+    +listAllOrders(page: int, size: int, status: String): IPage<OrderVO>
+    +cancelOrder(orderId: Long, userId: Long): void
+    +receiveOrder(orderId: Long, userId: Long): void
+    +shipOrder(orderId: Long): void
+  }
+
+  interface "RegularOrderService" as ros <<interface>> {
+    +createFromCart(userId: Long, req: CreateOrderReq): List<Long>
+  }
+
+  class RegularOrderServiceImpl {
+    -orderMapper: OrderMapper
+    -cartMapper: CartMapper
+    -productMapper: ProductMapper
+    -couponService: CouponService
+    +createFromCart(userId: Long, req: CreateOrderReq): List<Long>
+  }
+
+  interface "CartService" as csvc <<interface>> {
+    +listCart(userId: Long): List<CartVO>
+    +addCart(userId: Long, req: AddCartReq): CartVO
+    +updateQuantity(id: Long, quantity: int, userId: Long): CartVO
+    +deleteCart(id: Long, userId: Long): void
+    +listCartByIds(ids: List<Long>): List<CartVO>
+  }
+
+  class CartServiceImpl {
+    -cartMapper: CartMapper
+    +addCart(userId: Long, req: AddCartReq): CartVO
+    +updateQuantity(id: Long, quantity: int, userId: Long): CartVO
+    +deleteCart(id: Long, userId: Long): void
+    +listCartByIds(ids: List<Long>): List<CartVO>
+    +listCart(userId: Long): List<CartVO>
+  }
+
+  interface "CouponService" as cousvc <<interface>> {
+    +claimCoupon(userId: Long, couponId: Long): UserCouponVO
+    +myCoupons(userId: Long, page: int, size: int): IPage<UserCouponVO>
+    +calcDiscount(userId: Long, req: CalcDiscountReq): Map<String, Long>
+    +listCoupons(page: int, size: int): IPage<CouponVO>
+    +createCoupon(req: CouponCreateReq): void
+    +disableCoupon(id: Long): void
+  }
+
+  class CouponServiceImpl {
+    -couponMapper: CouponMapper
+    -userCouponMapper: UserCouponMapper
+    +claimCoupon(userId: Long, couponId: Long): UserCouponVO
+    +myCoupons(userId: Long, page: int, size: int): IPage<UserCouponVO>
+    +calcDiscount(userId: Long, req: CalcDiscountReq): Map<String, Long>
+    +listCoupons(page: int, size: int): IPage<CouponVO>
+    +createCoupon(req: CouponCreateReq): void
+    +disableCoupon(id: Long): void
+  }
+
+  class OrderController {
+    +listMyOrders(userId: Long, page: int, size: int): Result<IPage<OrderVO>>
+    +getOrder(orderId: Long, userId: Long): Result<OrderVO>
+    +listAllOrders(role: String, page: int, size: int, status: String): Result<IPage<OrderVO>>
+    +createOrder(userId: Long, req: CreateOrderReq): Result<List<Long>>
+    +cancelOrder(id: Long, userId: Long): Result<Void>
+    +receiveOrder(id: Long, userId: Long): Result<Void>
+    +shipOrder(id: Long, role: String): Result<Void>
+  }
+
+  class CartController {
+    +listCartByIds(ids: String, userId: Long): Result<List<CartVO>>
+    +listCart(userId: Long): Result<List<CartVO>>
+    +addCart(userId: Long, req: AddCartReq): Result<CartVO>
+    +updateQuantity(id: Long, quantity: int, userId: Long): Result<CartVO>
+    +deleteCart(id: Long, userId: Long): Result<Void>
+    +clearCart(userId: Long): Result<Void>
+  }
+
+  class CouponController {
+    +listCoupons(role: String, page: int, size: int): Result<IPage<CouponVO>>
+    +getCoupon(role: String, id: Long): Result<CouponVO>
+    +createCoupon(role: String, req: CouponCreateReq): Result<Void>
+    +updateCoupon(role: String, id: Long, req: CouponCreateReq): Result<Void>
+    +disableCoupon(role: String, id: Long): Result<Void>
+    +claimCoupon(userId: Long, couponId: Long): Result<UserCouponVO>
+    +myCoupons(userId: Long, page: int, size: int): Result<IPage<UserCouponVO>>
+    +calcDiscount(userId: Long, req: CalcDiscountReq): Result<Map<String, Long>>
+  }
+
+  class StatisticsController {
+    +summary(role: String): Result<StatisticsSummaryVO>
+    +orderTrend(role: String, days: int): Result<List<OrderTrendVO>>
+    +topProducts(role: String, days: int, limit: int): Result<List<TopProductVO>>
+  }
+
+  class OrderMapper
+  class CartMapper
+  class CouponMapper
+  class UserCouponMapper
+
+}
+
+OrderServiceImpl ..|> OrderService
+RegularOrderServiceImpl ..|> RegularOrderService
+CartServiceImpl ..|> CartService
+CouponServiceImpl ..|> CouponService
+
+OrderController --> OrderService
+OrderController --> RegularOrderService
+CartController --> CartService
+CouponController --> CouponService
+StatisticsController --> OrderMapper
+StatisticsController --> CartMapper
+
+RegularOrderServiceImpl --> OrderMapper
+RegularOrderServiceImpl --> CartMapper
+RegularOrderServiceImpl --> CouponService
+
+OrderServiceImpl --> OrderMapper
+CartServiceImpl --> CartMapper
+CouponServiceImpl --> CouponMapper
+CouponServiceImpl --> UserCouponMapper
+
+@enduml

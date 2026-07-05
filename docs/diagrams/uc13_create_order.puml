@@ -1,0 +1,29 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "OrderController" as ctrl
+participant "RegularOrderServiceImpl" as svc
+participant "CartServiceImpl" as cartSvc
+participant "ProductMapper" as prodMapper
+participant "OrderMapper" as orderMapper
+database MySQL as db
+
+user -> gw: 1 POST /api/order/create\n{cartItemIds, addressId, couponId?}
+gw -> ctrl: 2 JWT认证
+ctrl -> svc: 3 createFromCart(userId, req)
+svc -> cartSvc: 4 查询选中的购物车项
+cartSvc -> db
+db --> cartSvc: 购物车列表(含商品信息)
+svc -> svc: 5 校验归属和库存
+svc -> prodMapper: 6 扣减库存 UPDATE stock-=n
+prodMapper -> db
+svc -> svc: 7 计算总金额(优惠券抵扣)
+svc -> svc: 8 雪花算法生成订单ID
+svc -> orderMapper: 9 批量INSERT订单
+orderMapper -> db
+svc -> cartSvc: 10 删除已购买购物车项
+note right: @Transactional\n保证原子性
+svc --> ctrl: 11 List<Long> orderIds
+ctrl --> gw
+gw --> user: 12 {code:0, data:orderIds}
+@enduml

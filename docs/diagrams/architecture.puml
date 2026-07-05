@@ -1,0 +1,50 @@
+@startuml
+!define RECTANGLE class
+
+skinparam backgroundColor #FEFEFE
+
+rectangle "F r o n t e n d" as frontend #E8F0FE {
+  rectangle "Vue3 SPA\n:5173" as vue
+}
+
+rectangle "接 入 层" as gateway_layer #FFF8E7 {
+  rectangle "Nginx (反向代理)" as nginx
+  rectangle "Spring Cloud Gateway\n:8080" as gateway
+}
+
+rectangle "业 务 层" as biz_layer #F0FFF0 {
+  rectangle "User Svc\n:8081" as user
+  rectangle "Product Svc\n:8082" as product
+  rectangle "Order Svc\n:8083" as order
+  rectangle "AI Svc\n:8084" as ai
+  rectangle "Seckill Svc\n:8085" as seckill
+}
+
+rectangle "数 据 层" as data_layer #FFF0F0 {
+  rectangle "MySQL" as mysql
+  rectangle "Redis" as redis
+  rectangle "RabbitMQ" as mq
+}
+
+vue --> nginx
+nginx --> gateway
+gateway --> user
+gateway --> product
+gateway --> order
+gateway --> ai
+gateway --> seckill
+
+user --> mysql
+product --> mysql
+order --> mysql
+seckill --> mysql
+
+user --> redis
+product --> redis
+seckill --> redis
+
+seckill --> mq
+
+ai ..> "DeepSeek API" : HTTP
+
+@enduml

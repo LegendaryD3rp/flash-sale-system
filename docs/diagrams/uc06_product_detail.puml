@@ -1,0 +1,25 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "ProductController" as ctrl
+participant "ProductServiceImpl" as svc
+participant "ProductMapper" as mapper
+database MySQL as db
+database Redis as redis
+
+user -> gw: 1 GET /api/product/{id}
+gw -> ctrl: 2 JWT放行(透传userId/role)
+ctrl -> svc: 3 getProductById(id)
+svc -> redis: 4 查缓存 product:{id}
+alt 缓存命中
+  redis --> svc: 缓存数据
+else 缓存未命中
+  svc -> mapper: 5 查数据库(含SKU+图片)
+  mapper -> db
+  db --> mapper
+  svc -> redis: 6 写入缓存(1h)
+end
+svc --> ctrl: 7 ProductVO
+ctrl --> gw
+gw --> user: 8 {code:0, data:{productVO}}
+@enduml

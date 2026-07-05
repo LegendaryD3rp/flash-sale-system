@@ -1,0 +1,38 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "CartController" as ctrl
+participant "CartServiceImpl" as svc
+database MySQL as db
+
+== 添加 ==
+user -> gw: POST /api/cart/add\n{productId, quantity}
+gw -> ctrl: JWT认证
+ctrl -> svc: addCart(userId, req)
+alt 已存在
+  svc -> db: UPDATE quantity=quantity+n
+else 不存在
+  svc -> db: INSERT
+end
+db --> svc
+ctrl --> gw
+gw --> user: {code:0}
+
+== 修改数量 ==
+user -> gw: PUT /api/cart/{id}\n{quantity}
+gw -> ctrl: JWT认证
+ctrl -> svc: updateQuantity(id, qty, userId)
+alt qty=0
+  svc -> db: DELETE
+else
+  svc -> db: UPDATE quantity
+end
+gw --> user: {code:0}
+
+== 删除 ==
+user -> gw: DELETE /api/cart/{id}
+gw -> ctrl: JWT认证
+ctrl -> svc: deleteCart(id, userId)
+svc -> db: DELETE WHERE id AND user_id
+gw --> user: {code:0}
+@enduml

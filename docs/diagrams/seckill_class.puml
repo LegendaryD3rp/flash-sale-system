@@ -1,0 +1,99 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "秒杀服务 - 类图" {
+
+  interface "FlashSaleService" as fsvc <<interface>> {
+    +flash(activityId: Long, userId: Long): String
+  }
+
+  class FlashSaleServiceImpl {
+    -redisTemplate: StringRedisTemplate
+    -rabbitTemplate: RabbitTemplate
+    -activityMapper: SeckillActivityMapper
+    -seckillOrderMapper: SeckillOrderMapper
+    +flash(activityId: Long, userId: Long): String
+  }
+
+  interface "SeckillActivityService" as sasvc <<interface>> {
+    +listActivities(): List<SeckillActivityVO>
+    +getActivityDetail(id: Long): ActivityDetailVO
+    +createActivity(req: SeckillActCreateReq): Long
+    +updateActivity(id: Long, req: SeckillActCreateReq): void
+    +deleteActivity(id: Long): void
+    +updateStatus(id: Long, status: String): void
+    +warmUp(id: Long): void
+  }
+
+  class SeckillActivityServiceImpl {
+    -activityMapper: SeckillActivityMapper
+    +listActivities(): List<SeckillActivityVO>
+    +getActivityDetail(id: Long): ActivityDetailVO
+    +createActivity(req: SeckillActCreateReq): Long
+    +updateActivity(id: Long, req: SeckillActCreateReq): void
+    +deleteActivity(id: Long): void
+    +updateStatus(id: Long, status: String): void
+    +warmUp(id: Long): void
+  }
+
+  class SeckillController {
+    +listActivities(): Result<List<SeckillActivityVO>>
+    +getActivity(id: Long): Result<ActivityDetailVO>
+    +flash(activityId: Long, userId: Long): Result<String>
+  }
+
+  class SeckillActivityController {
+    +list(role: String, page: int, size: int): Result<IPage<SeckillActivityVO>>
+    +create(role: String, req: SeckillActCreateReq): Result<Long>
+    +update(role: String, id: Long, req: SeckillActCreateReq): Result<Void>
+    +delete(role: String, id: Long): Result<Void>
+    +updateStatus(role: String, id: Long, status: String): Result<Void>
+    +warmUp(role: String, id: Long): Result<Void>
+  }
+
+  class SeckillOrderConsumer {
+    -orderMapper: OrderMapper
+    -productMapper: ProductMapper
+    +handleSeckillOrder(message: SeckillMessage): void
+  }
+
+  class SeckillWebSocketHandler {
+    +afterConnectionEstablished(session: WebSocketSession): void
+    +handleTextMessage(session: WebSocketSession, message: TextMessage): void
+    +sendFlashResult(userId: Long, result: SeckillResult): void
+  }
+
+  class SeckillActivityMapper
+  class SeckillOrderMapper
+
+  class SeckillActivity {
+    -id: Long
+    -productId: Long
+    -seckillPrice: Long
+    -stock: Integer
+    -startTime: LocalDateTime
+    -endTime: LocalDateTime
+    -status: String
+    -version: Integer
+  }
+
+}
+
+SeckillController --> FlashSaleService
+SeckillController --> SeckillActivityService
+SeckillActivityController --> SeckillActivityService
+
+FlashSaleServiceImpl ..|> FlashSaleService
+FlashSaleServiceImpl --> SeckillActivityMapper
+FlashSaleServiceImpl --> StringRedisTemplate
+FlashSaleServiceImpl --> RabbitTemplate
+
+SeckillActivityServiceImpl ..|> SeckillActivityService
+SeckillActivityServiceImpl --> SeckillActivityMapper
+
+SeckillOrderConsumer --> OrderMapper
+SeckillOrderConsumer --> ProductMapper
+
+SeckillActivityMapper --> SeckillActivity
+
+@enduml

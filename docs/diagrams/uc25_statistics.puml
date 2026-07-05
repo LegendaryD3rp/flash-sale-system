@@ -1,0 +1,32 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "StatisticsController" as ctrl
+participant "OrderMapper" as mapper
+database MySQL as db
+
+== 数据概览 ==
+admin -> gw: GET /api/admin/statistics/summary
+gw -> ctrl: JWT+ADMIN角色
+ctrl -> mapper: 1 统计总用户数 selectCount(user)
+mapper -> db
+db --> mapper
+ctrl -> mapper: 2 统计总订单数
+mapper -> db
+db --> mapper
+ctrl -> mapper: 3 统计总销售额 SUM(total_amount)
+mapper -> db
+db --> mapper
+ctrl --> gw: StatisticsSummaryVO
+gw --> admin: {code:0, data:{summary}}
+
+== 订单趋势 ==
+admin -> gw: GET /api/admin/statistics/order-trend
+ctrl -> mapper: GROUP BY DATE(created_at)
+gw --> admin: 每日订单量
+
+== 热销商品 ==
+admin -> gw: GET /api/admin/statistics/top-products
+ctrl -> mapper: GROUP BY product_id ORDER BY COUNT DESC LIMIT 10
+gw --> admin: Top10商品
+@enduml

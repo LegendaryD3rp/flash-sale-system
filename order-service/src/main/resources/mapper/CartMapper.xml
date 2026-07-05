@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.flashsale.orderservice.mapper.CartMapper">
+
+    <resultMap id="CartVOMap" type="com.flashsale.orderservice.vo.CartVO">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="productImageUrl" column="product_image_url" />
+        <result property="productPrice" column="product_price" />
+        <result property="productCategory" column="product_category" />
+        <result property="stock" column="stock" />
+        <result property="status" column="status" />
+        <result property="quantity" column="quantity" />
+        <result property="subtotal" column="subtotal" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <select id="selectCartVOList" resultMap="CartVOMap">
+        SELECT c.id, c.user_id, c.product_id, c.quantity,
+               c.created_at, c.updated_at,
+               p.name         AS product_name,
+               p.image_url    AS product_image_url,
+               p.price        AS product_price,
+               p.category     AS product_category,
+               p.stock,
+               p.status,
+               (p.price * c.quantity) AS subtotal
+        FROM cart c
+        JOIN product p ON c.product_id = p.id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="selectCartVOListByIds" resultMap="CartVOMap">
+        SELECT c.id, c.user_id, c.product_id, c.quantity,
+               c.created_at, c.updated_at,
+               p.name         AS product_name,
+               p.image_url    AS product_image_url,
+               p.price        AS product_price,
+               p.category     AS product_category,
+               p.stock,
+               p.status,
+               (p.price * c.quantity) AS subtotal
+        FROM cart c
+        JOIN product p ON c.product_id = p.id
+        WHERE c.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY c.created_at DESC
+    </select>
+
+</mapper>

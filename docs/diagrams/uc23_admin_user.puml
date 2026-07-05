@@ -1,0 +1,29 @@
+@startuml
+actor 管理员 as admin
+participant Gateway as gw
+participant "AdminUserController" as ctrl
+participant "UserServiceImpl" as svc
+database MySQL as db
+
+== 用户列表 ==
+admin -> gw: GET /api/admin/user/list?page=1
+gw -> ctrl: JWT认证(ADMIN)
+ctrl -> svc: adminListUsers(page, size)
+svc -> db: 分页查询全部用户
+db --> svc
+ctrl --> gw
+gw --> admin: {code:0, data:{records}}
+
+== 禁用用户 ==
+admin -> gw: DELETE /api/admin/user/{id}
+ctrl -> svc: adminDisableUser(id)
+svc -> db: UPDATE status=DISABLED
+db --> svc
+gw --> admin: {code:0}
+
+== 修改用户 ==
+admin -> gw: PUT /api/admin/user/{id}
+ctrl -> svc: adminUpdateUser(id, req)
+svc -> db: UPDATE user
+gw --> admin: {code:0}
+@enduml

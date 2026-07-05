@@ -1,0 +1,29 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "FlashSaleServiceImpl" as svc
+database Redis as redis
+participant RabbitMQ as mq
+participant "SeckillOrderConsumer" as consumer
+database MySQL as db
+participant "SeckillWebSocketHandler" as ws
+
+user -> gw: 1 POST /api/seckill/flash\n{activityId}
+gw -> gw: 2 JWT认证
+gw -> gw: 3 限流检查(500QPS/IP)
+gw -> svc: 4 路由转发
+svc -> redis: 5 校验活动状态&时间
+redis --> svc
+svc -> redis: 6 SADD防重复(user_set)
+redis --> svc: 0=未抢过
+svc -> redis: 7 DECR扣库存
+redis --> svc: 剩余库存>=0
+svc -> mq: 8 发送MQ消息
+svc --> gw: 9 "排队中"
+gw --> user
+mq -> consumer: 10 消费消息
+consumer -> db: 11 INSERT订单
+db --> consumer
+consumer ->> ws: 12 WebSocket推送结果
+ws --> user: 13 秒杀结果通知
+@enduml

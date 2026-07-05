@@ -1,0 +1,26 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "FavoriteController" as ctrl
+participant "FavoriteServiceImpl" as svc
+database MySQL as db
+
+== 收藏 ==
+user -> gw: POST /api/product/favorite\n{productId}
+gw -> ctrl: JWT认证
+ctrl -> svc: addFavorite(userId, productId)
+svc -> db: INSERT (uk_user_product)
+db --> svc
+ctrl --> gw
+gw --> user: {code:0}
+
+== 取消收藏 ==
+user -> gw: DELETE /api/product/favorite/{pid}
+ctrl -> svc: removeFavorite(userId, productId)
+svc -> db: DELETE WHERE user_id AND product_id
+
+== 收藏列表 ==
+user -> gw: GET /api/product/favorite/favorites
+ctrl -> svc: listFavorites(userId, page)
+svc -> db: 分页查询(关联商品表)
+@enduml

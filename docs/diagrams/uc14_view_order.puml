@@ -1,0 +1,24 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "OrderController" as ctrl
+participant "OrderServiceImpl" as svc
+database MySQL as db
+
+== 订单列表 ==
+user -> gw: GET /api/order/list?page=1
+gw -> ctrl: JWT认证
+ctrl -> svc: listUserOrders(userId, page)
+svc -> db: 分页查询
+db --> svc
+ctrl --> gw
+gw --> user: {code:0, data:{records}}
+
+== 订单详情 ==
+user -> gw: GET /api/order/{orderId}
+ctrl -> svc: getOrderById(orderId)
+svc -> db: SELECT + 归属校验
+db --> svc
+ctrl --> gw
+gw --> user: {code:0, data:OrderVO}
+@enduml

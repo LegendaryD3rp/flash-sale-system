@@ -1,0 +1,18 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "UserController" as ctrl
+participant "UserServiceImpl" as svc
+participant "UserMapper" as mapper
+database MySQL as db
+
+user -> gw: 1 PUT /api/user/profile\n{nickname, email}
+gw -> ctrl: 2 JWT认证(透传X-User-Id)
+ctrl -> svc: 3 updateProfile(userId, req)
+svc -> mapper: 4 UPDATE nickname,email
+mapper -> db
+db --> mapper
+svc --> ctrl: 5 success
+ctrl --> gw
+gw --> user: 6 {code:0}
+@enduml

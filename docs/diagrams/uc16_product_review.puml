@@ -1,0 +1,18 @@
+@startuml
+actor 用户 as user
+participant Gateway as gw
+participant "ReviewController" as ctrl
+participant "ReviewServiceImpl" as svc
+database MySQL as db
+
+user -> gw: 1 POST /api/product/review\n{productId, orderId, rating, content}
+gw -> ctrl: 2 JWT认证(透传X-User-Id)
+ctrl -> svc: 3 createReview(userId, req)
+svc -> db: 4 校验订单已签收、未评价
+db --> svc
+svc -> db: 5 INSERT review
+db --> svc
+svc --> ctrl: 6 reviewId
+ctrl --> gw
+gw --> user: 7 {code:0, data:reviewId}
+@enduml
