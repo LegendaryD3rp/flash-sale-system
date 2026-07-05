@@ -1,0 +1,396 @@
+{
+  "info": {
+    "name": "闪购秒杀系统 · 全链路E2E测试",
+    "description": "覆盖注册→登录→商品→地址→购物车→下单→支付→秒杀→AI导购全流程。导入后按文件夹顺序执行。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "addressId", "value": "" },
+    { "key": "cartId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "activityId", "value": "" },
+    { "key": "adminToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0-管理员准备",
+      "item": [
+        {
+          "name": "管理员登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0) {",
+                  "  pm.collectionVariables.set('adminToken', json.data.token);",
+                  "  pm.collectionVariables.set('userId', String(json.data.userId));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}"},
+            "url": {"raw": "{{base_url}}/api/user/login", "host": ["{{base_url}}"], "path": ["api","user","login"]}
+          }
+        },
+        {
+          "name": "获取商品列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data.records.length > 0) {",
+                  "  pm.collectionVariables.set('productId', String(json.data.records[0].id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
+            "url": {"raw": "{{base_url}}/api/product?page=1&size=10", "host": ["{{base_url}}"], "path": ["api","product"], "query": [{"key":"page","value":"1"},{"key":"size","value":"10"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "1-用户注册登录",
+      "item": [
+        {
+          "name": "注册新用户",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0) console.log('注册成功');",
+                  "pm.collectionVariables.set('tmpUser', 'e2e_test_' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{tmpUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"},
+            "url": {"raw": "{{base_url}}/api/user/register", "host": ["{{base_url}}"], "path": ["api","user","register"]}
+          }
+        },
+        {
+          "name": "登录",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "  pm.collectionVariables.set('userId', String(json.data.userId));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{tmpUser}}\",\"password\":\"w123456\"}"},
+            "url": {"raw": "{{base_url}}/api/user/login", "host": ["{{base_url}}"], "path": ["api","user","login"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "2-地址管理",
+      "item": [
+        {
+          "name": "添加地址",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0) {",
+                  "  const addrId = typeof json.data === 'object' ? json.data.id : json.data;",
+                  "  pm.collectionVariables.set('addressId', String(addrId));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"receiverName\":\"测试用户\",\"receiverPhone\":\"13800138000\",\"province\":\"北京\",\"city\":\"北京\",\"district\":\"朝阳\",\"detailAddress\":\"幸福街100号\",\"isDefault\":1}"},
+            "url": {"raw": "{{base_url}}/api/address", "host": ["{{base_url}}"], "path": ["api","address"]}
+          }
+        },
+        {
+          "name": "查询地址列表",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/api/address/list", "host": ["{{base_url}}"], "path": ["api","address","list"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "3-购物车",
+      "item": [
+        {
+          "name": "添加商品到购物车",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0) {",
+                  "  const cartId = typeof json.data === 'object' ? json.data.id : json.data;",
+                  "  pm.collectionVariables.set('cartId', String(cartId));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"productId\":{{productId}},\"quantity\":1}"},
+            "url": {"raw": "{{base_url}}/api/cart/add", "host": ["{{base_url}}"], "path": ["api","cart","add"]}
+          }
+        },
+        {
+          "name": "查看购物车列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/cart/list", "host": ["{{base_url}}"], "path": ["api","cart","list"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "4-普通订单",
+      "item": [
+        {
+          "name": "创建订单",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data && json.data.length > 0) {",
+                  "  pm.collectionVariables.set('orderId', String(json.data[0]));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"cartIds\":[{{cartId}}],\"addressId\":{{addressId}}}"},
+            "url": {"raw": "{{base_url}}/api/order/create", "host": ["{{base_url}}"], "path": ["api","order","create"]}
+          }
+        },
+        {
+          "name": "支付订单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/order/{{orderId}}/pay", "host": ["{{base_url}}"], "path": ["api","order","{{orderId}}","pay"]}
+          }
+        },
+        {
+          "name": "查询订单列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/order/list?page=1&size=20", "host": ["{{base_url}}"], "path": ["api","order","list"], "query": [{"key":"page","value":"1"},{"key":"size","value":"20"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "5-秒杀全流程",
+      "item": [
+        {
+          "name": "管理员建秒杀活动",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.code === 0 && json.data) {",
+                  "  pm.collectionVariables.set('activityId', String(json.data));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{adminToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"productId\":{{productId}},\"seckillPrice\":9900,\"totalStock\":200,\"startTime\":\"2026-01-01T00:00:00\",\"endTime\":\"2027-01-01T00:00:00\"}"},
+            "url": {"raw": "{{base_url}}/api/seckill/activity", "host": ["{{base_url}}"], "path": ["api","seckill","activity"]}
+          }
+        },
+        {
+          "name": "启用活动并预热",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{adminToken}}"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-User-Role", "value": "ADMIN"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"status\":\"PENDING\"}"},
+            "url": {"raw": "{{base_url}}/api/seckill/activity/{{activityId}}/status", "host": ["{{base_url}}"], "path": ["api","seckill","activity","{{activityId}}","status"]}
+          }
+        },
+        {
+          "name": "预热(缓存库存到Redis)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{adminToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{}"},
+            "url": {"raw": "{{base_url}}/api/seckill/activity/{{activityId}}/warm-up", "host": ["{{base_url}}"], "path": ["api","seckill","activity","{{activityId}}","warm-up"]}
+          }
+        },
+        {
+          "name": "用户秒杀抢购",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "console.log('秒杀结果:', JSON.stringify(json));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"activityId\":{{activityId}}}"},
+            "url": {"raw": "{{base_url}}/api/seckill/flash", "host": ["{{base_url}}"], "path": ["api","seckill","flash"]}
+          }
+        },
+        {
+          "name": "查询秒杀订单(WebSocket推送结果)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/order/list?page=1&size=50", "host": ["{{base_url}}"], "path": ["api","order","list"], "query": [{"key":"page","value":"1"},{"key":"size","value":"50"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "6-AI智能导购",
+      "item": [
+        {
+          "name": "AI商品咨询",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"query\":\"我想买一台笔记本办公用，有什么推荐？\"}"},
+            "url": {"raw": "{{base_url}}/api/ai/chat", "host": ["{{base_url}}"], "path": ["api","ai","chat"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "7-管理员功能",
+      "item": [
+        {
+          "name": "查看所有订单(管理员)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{adminToken}}"},
+              {"key": "X-User-Role", "value": "ADMIN"}
+            ],
+            "url": {"raw": "{{base_url}}/api/admin/order/list?page=1&size=20", "host": ["{{base_url}}"], "path": ["api","admin","order","list"], "query": [{"key":"page","value":"1"},{"key":"size","value":"20"}]}
+          }
+        },
+        {
+          "name": "查看系统统计数据",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{adminToken}}"},
+              {"key": "X-User-Role", "value": "ADMIN"}
+            ],
+            "url": {"raw": "{{base_url}}/api/admin/statistics/summary", "host": ["{{base_url}}"], "path": ["api","admin","statistics","summary"]}
+          }
+        }
+      ]
+    }
+  ]
+}
