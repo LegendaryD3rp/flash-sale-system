@@ -854,7 +854,7 @@ def e2e_websocket_push():
 
     async def _test():
         # 连接WebSocket
-        uri = f"ws://localhost:8083/ws/seckill?userId={uid}"
+        uri = f"ws://localhost:8080/ws/seckill?userId={uid}"
         async with websockets.connect(uri, open_timeout=10) as ws:
             # 发送秒杀请求
             c, d, _ = api("POST", "/api/seckill/flash",

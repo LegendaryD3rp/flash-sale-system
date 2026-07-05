@@ -34,8 +34,8 @@ spring:
           predicates:
             - Path=/api/order/**, /api/order, /api/admin/order/**, /api/cart/**, /api/coupon/**, /api/admin/coupon/**, /api/admin/statistics/**
 
-        - id: seckill-service-ws
-          uri: http://localhost:8085
+        - id: order-service-ws
+          uri: http://localhost:8083
           predicates:
             - Path=/ws/**
 
@@ -52,7 +52,7 @@ jwt:
 # Auth whitelist — paths that don't require JWT
 gateway:
   auth:
-    whitelist: POST:/api/user/login,POST:/api/user/register,GET:/api/product,GET:/api/seckill/activity,POST:/api/ai/chat,POST:/api/user/forgot-password,POST:/api/user/reset-password,GET:/api/product/*/reviews
+    whitelist: POST:/api/user/login,POST:/api/user/register,GET:/api/product,GET:/api/seckill/activity,POST:/api/ai/chat,POST:/api/user/forgot-password,POST:/api/user/reset-password,GET:/api/product/*/reviews,GET:/ws/
   rate-limit:
     # General rate limit: capacity=2000, refill=500/sec
     capacity: 2000
