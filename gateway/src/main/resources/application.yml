@@ -54,12 +54,12 @@ gateway:
   auth:
     whitelist: POST:/api/user/login,POST:/api/user/register,GET:/api/product,GET:/api/seckill/activity,POST:/api/ai/chat,POST:/api/user/forgot-password,POST:/api/user/reset-password,GET:/api/product/*/reviews,GET:/ws/
   rate-limit:
-    # General rate limit: capacity=2000, refill=500/sec
-    capacity: 2000
-    refill-rate: 500
-    # Seckill-specific rate limit: capacity=500, refill=200/sec
-    seckill-capacity: 500
-    seckill-refill-rate: 200
+    # General rate limit: capacity=4000
+    capacity: 4000
+    refill-rate: 2000
+    # Seckill-specific rate limit: capacity=2000
+    seckill-capacity: 2000
+    seckill-refill-rate: 1000
 
 logging:
   level:
