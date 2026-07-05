@@ -21,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,5 +78,30 @@ class CouponServiceImplTest {
 
         UserCouponVO vo = couponService.claimCoupon(1L, 1L);
         assertThat(vo.getUserId()).isEqualTo(1L);
+    }
+
+    /** ⭐ P1-⑮ 同一用户不重复领券 */
+    @Test
+    void claimCoupon_ShouldThrow_WhenAlreadyClaimed() {
+        Coupon c = validCoupon();
+        when(couponMapper.selectById(1L)).thenReturn(c);
+        when(userCouponMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(1L);
+
+        assertThatThrownBy(() -> couponService.claimCoupon(1L, 1L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("已领取");
+    }
+
+    /** ⭐ P1-⑭ 乐观锁防超发：taken >= stock 时抛异常 */
+    @Test
+    void claimCoupon_ShouldThrow_WhenStockExhausted() {
+        Coupon c = validCoupon();
+        c.setTaken(100); // taken >= stock (100 >= 100)
+        when(couponMapper.selectById(1L)).thenReturn(c);
+
+        assertThatThrownBy(() -> couponService.claimCoupon(1L, 1L))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("已领完");
+        verify(userCouponMapper, never()).insert((com.flashsale.orderservice.entity.UserCoupon) any());
     }
 }

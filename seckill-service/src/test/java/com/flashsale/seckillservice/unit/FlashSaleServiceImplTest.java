@@ -80,4 +80,15 @@ class FlashSaleServiceImplTest {
                 .isInstanceOf(com.flashsale.common.exception.BusinessException.class)
                 .hasMessageContaining("预热");
     }
+
+    /** ⭐ P0-③ 同一用户重复抢购 → 409 幂等拒绝 */
+    @Test
+    void flash_ShouldThrow_WhenDuplicatePurchase() {
+        when(setOps.isMember("seckill:bought:1", "1")).thenReturn(true);
+
+        assertThatThrownBy(() -> flashSaleService.flash(1L, 1L))
+                .isInstanceOf(com.flashsale.common.exception.BusinessException.class)
+                .hasMessageContaining("重复");
+        verify(valueOps, never()).decrement(anyString());
+    }
 }
