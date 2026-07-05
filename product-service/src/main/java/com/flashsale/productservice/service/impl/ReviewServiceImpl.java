@@ -67,6 +67,7 @@ public class ReviewServiceImpl implements ReviewService {
         ProductReview review = new ProductReview();
         review.setProductId(productId);
         review.setUserId(userId);
+        review.setOrderId(0L);  // 独立评价无需订单ID，DB要求order_id NOT NULL，用0占位
         review.setRating(rating);
         review.setContent(content);
 
