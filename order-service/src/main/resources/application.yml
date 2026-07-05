@@ -32,3 +32,34 @@ springdoc:
 logging:
   level:
     com.flashsale: DEBUG
+
+# RabbitMQ（秒杀订单消费 — 队列定义与 seckill-service 一致）
+seckill:
+  mq:
+    exchange: seckill.order.exchange
+    queue: seckill.order.queue
+    routing-key: seckill.order.create
+    dlq: seckill.order.dlq
+    dlx: seckill.order.dlx
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        # 削峰：一次只预取10条，平滑消费
+        prefetch: 10
+        # 并发消费者
+        concurrency: 3
+        max-concurrency: 8
+        # 重试机制
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2
+        default-requeue-rejected: false

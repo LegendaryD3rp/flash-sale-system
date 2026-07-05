@@ -103,4 +103,10 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 秒杀落单后同步DB库存 -->
+    <update id="updateSeckillStock">
+        UPDATE seckill_activity SET available_stock = available_stock - 1
+        WHERE id = #{activityId} AND available_stock > 0
+    </update>
+
 </mapper>

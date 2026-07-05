@@ -36,4 +36,9 @@ public interface OrderMapper extends BaseMapper<Order> {
      * 热销商品TopN
      */
     List<TopProductVO> selectTopProducts(@Param("limit") int limit);
+
+    /**
+     * 秒杀：更新可用库存（消费者落单后同步DB）
+     */
+    void updateSeckillStock(@Param("activityId") Long activityId);
 }

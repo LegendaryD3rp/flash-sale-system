@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flashsale.common.constant.ErrorCode;
 import com.flashsale.common.exception.BusinessException;
-import com.flashsale.seckillservice.dto.SeckillMessage;
+import com.flashsale.common.dto.SeckillMessage;
 import com.flashsale.seckillservice.service.FlashSaleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

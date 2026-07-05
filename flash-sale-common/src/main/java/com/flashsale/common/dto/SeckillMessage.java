@@ -1,9 +1,9 @@
-package com.flashsale.seckillservice.dto;
+package com.flashsale.common.dto;
 
 import java.io.Serializable;
 
 /**
- * 秒杀落单 MQ 消息体
+ * 秒杀落单 MQ 消息体 — 共享于 seckill-service 和 order-service 之间
  */
 public class SeckillMessage implements Serializable {
 
@@ -11,7 +11,7 @@ public class SeckillMessage implements Serializable {
     private Long activityId;
     private Long productId;
     private Long seckillPrice;
-    private Long orderSn;       // 雪花算法生成的订单号
+    private Long orderSn;
     private long timestamp;
 
     public SeckillMessage() {}
@@ -28,19 +28,14 @@ public class SeckillMessage implements Serializable {
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
-
     public Long getActivityId() { return activityId; }
     public void setActivityId(Long activityId) { this.activityId = activityId; }
-
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
-
     public Long getSeckillPrice() { return seckillPrice; }
     public void setSeckillPrice(Long seckillPrice) { this.seckillPrice = seckillPrice; }
-
     public Long getOrderSn() { return orderSn; }
     public void setOrderSn(Long orderSn) { this.orderSn = orderSn; }
-
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 }

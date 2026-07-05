@@ -1,4 +1,4 @@
-package com.flashsale.seckillservice.websocket;
+package com.flashsale.common.websocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,13 +12,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 秒杀结果 WebSocket Handler
+ * 秒杀结果 WebSocket Handler — 共享于所有服务
  *
- * 用户连接 WebSocket 后，将 session 注册到 userId 映射中。
- * 秒杀结果通过 MQ 消费者回调 pushToUser() 推送给指定用户。
- *
- * 连接方式：
- *   ws://localhost:8085/ws/seckill?userId={userId}&token={jwt}
+ * 连接方式：ws://<host>/ws/seckill?userId={userId}
+ * 订单创建成功/失败后，通过 pushToUser() 主动推送结果给用户
  */
 public class SeckillWebSocketHandler extends TextWebSocketHandler {
 
@@ -39,7 +36,6 @@ public class SeckillWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-        // Ping/pong or future commands
         log.debug("WebSocket message from {}: {}", session.getId(), message.getPayload());
     }
 
@@ -80,7 +76,7 @@ public class SeckillWebSocketHandler extends TextWebSocketHandler {
                 try {
                     return Long.parseLong(kv[1]);
                 } catch (NumberFormatException e) {
-                    return null;
+                    log.warn("Invalid userId in query: {}", kv[1]);
                 }
             }
         }
