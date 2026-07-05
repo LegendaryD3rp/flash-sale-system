@@ -33,6 +33,17 @@ public class AddressServiceImpl implements AddressService {
         address.setId(null);
         address.setUserId(userId);
 
+        // 参数校验 — 避免DB NOT NULL异常冒泡到500
+        if (address.getReceiverName() == null || address.getReceiverName().isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "收件人姓名不能为空");
+        }
+        if (address.getReceiverPhone() == null || address.getReceiverPhone().isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "收件人电话不能为空");
+        }
+        if (address.getDetailAddress() == null || address.getDetailAddress().isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "详细地址不能为空");
+        }
+
         // 如果是第一个地址，自动设为默认
         long count = addressMapper.selectCount(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Address>()

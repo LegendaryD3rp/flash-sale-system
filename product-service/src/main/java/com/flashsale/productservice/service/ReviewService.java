@@ -25,4 +25,9 @@ public interface ReviewService {
      * 检查某订单是否已评价
      */
     boolean isOrderReviewed(Long orderId);
+
+    /**
+     * 为指定商品创建评价（无需订单ID）
+     */
+    Long createReviewForProduct(Long userId, Long productId, Integer rating, String content);
 }

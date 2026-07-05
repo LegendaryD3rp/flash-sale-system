@@ -38,6 +38,7 @@ class AddressServiceImplTest {
         Address addr = new Address();
         addr.setReceiverName("张三");
         addr.setReceiverPhone("13800138000");
+        addr.setDetailAddress("某地");
 
         when(addressMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
         when(addressMapper.insert(any(Address.class))).thenAnswer(invocation -> {
@@ -58,6 +59,8 @@ class AddressServiceImplTest {
     void addAddress_ShouldSetDefault_WhenFirst() {
         Address addr = new Address();
         addr.setReceiverName("李四");
+        addr.setReceiverPhone("13900000000");
+        addr.setDetailAddress("某地");
 
         when(addressMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
         when(addressMapper.insert(any(Address.class))).thenAnswer(invocation -> {
@@ -112,6 +115,9 @@ class AddressServiceImplTest {
         });
 
         Address newAddr = new Address();
+        newAddr.setReceiverName("赵六");
+        newAddr.setReceiverPhone("13700000000");
+        newAddr.setDetailAddress("某地");
         newAddr.setIsDefault(1);
         addressService.addAddress(1L, newAddr);
 

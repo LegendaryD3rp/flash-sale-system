@@ -62,6 +62,18 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewMapper.selectCount(wrapper) > 0;
     }
 
+    @Override
+    public Long createReviewForProduct(Long userId, Long productId, Integer rating, String content) {
+        ProductReview review = new ProductReview();
+        review.setProductId(productId);
+        review.setUserId(userId);
+        review.setRating(rating);
+        review.setContent(content);
+
+        reviewMapper.insert(review);
+        return review.getId();
+    }
+
     private void processImages(ReviewVO vo) {
         // images 字段存储为逗号分隔的URL，转换为数组
         // 这里不做转换，交由前端处理

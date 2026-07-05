@@ -32,6 +32,20 @@ public class ReviewController {
     }
 
     /**
+     * POST /api/product/{productId}/reviews — 对指定商品发表评价（无需订单ID）
+     */
+    @PostMapping("/{productId}/reviews")
+    public Result<Long> createReviewForProduct(
+            @PathVariable Long productId,
+            @RequestBody Map<String, Object> body,
+            @RequestHeader("X-User-Id") Long userId) {
+        Integer rating = body.get("rating") != null ? ((Number) body.get("rating")).intValue() : 5;
+        String content = body.get("content") != null ? body.get("content").toString() : "";
+        Long id = reviewService.createReviewForProduct(userId, productId, rating, content);
+        return Result.success(id);
+    }
+
+    /**
      * GET /api/product/{productId}/reviews — 查商品评价列表
      */
     @GetMapping("/{productId}/reviews")

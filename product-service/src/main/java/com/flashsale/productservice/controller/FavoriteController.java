@@ -83,7 +83,7 @@ public class FavoriteController {
      */
     @GetMapping("/check")
     public Result<Map<String, Boolean>> checkFavorites(
-            @RequestParam String productIds,
+            @RequestParam("ids") String productIds,
             @RequestHeader("X-User-Id") Long userId) {
         Set<Long> ids = Arrays.stream(productIds.split(","))
                 .map(String::trim)
