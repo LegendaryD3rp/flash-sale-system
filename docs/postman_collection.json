@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "【v4】闪购秒杀系统 · 全链路E2E测试",
-    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约15-30秒（含秒杀轮询等待）\n\n━ 并发测试（Newman）━\n已有 CSV 模板文件 docs/newman_concurrent.csv（10个用户）：\n   username,password,productIdx\n   con_user_1,w123456,0\n   con_user_2,w123456,1\n   ...\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀（含轮询+Redis验证）\" --iteration-count 10 -d docs/newman_concurrent.csv\n\n━ 数据清理 ━\n测试最后自动：结束秒杀活动 + 清空购物车 + 删除地址 + 禁用测试用户。\n注：订单为不可变记录，系统无 DELETE 端点，需手动清理。",
+    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约35-50秒（含秒杀等待10s+轮询20s）\n\n━ 并发测试（Newman）━\nCSV 数据文件示例（10个用户，按需保存为 your_data.csv）：\n   username,password,productIdx\n   con_user_1,w123456,0\n   con_user_2,w123456,1\n   con_user_3,w123456,2\n   con_user_4,w123456,0\n   con_user_5,w123456,1\n   con_user_6,w123456,2\n   con_user_7,w123456,0\n   con_user_8,w123456,1\n   con_user_9,w123456,2\n   con_user_10,w123456,0\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀（含轮询+Redis验证）\" --iteration-count 10 -d your_data.csv\n\n━ 数据清理 ━\n测试最后自动：结束秒杀活动 + 清空购物车 + 删除地址 + 禁用测试用户。\n订单为不可变记录（系统无 DELETE 端点），如需彻底清理：\n   DELETE FROM `order` WHERE user_id IN (SELECT id FROM user WHERE username LIKE 'e2e_pm_%');\n   DELETE FROM `user` WHERE username LIKE 'e2e_pm_%';",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -709,13 +709,13 @@
       "name": "6-秒杀（含轮询+Redis验证）",
       "item": [
         {
-          "name": "✅ 6.1 [管理员]创建秒杀活动（动态时间——1秒前开始）",
+          "name": "✅ 6.1 [管理员]创建秒杀活动（动态时间——5秒后开始）",
           "event": [
             {
               "listen": "prereq",
               "script": {
                 "exec": [
-                  "var n=new Date();pm.variables.set('dynamicStart',new Date(n.getTime()-1000).toISOString().slice(0,19));pm.variables.set('dynamicEnd',new Date(n.getTime()+86400000).toISOString().slice(0,19));"
+                  "var n=new Date();pm.variables.set('dynamicStart',new Date(n.getTime()+5000).toISOString().slice(0,19));pm.variables.set('dynamicEnd',new Date(n.getTime()+86400000).toISOString().slice(0,19));"
                 ],
                 "type": "text/javascript"
               }
@@ -875,6 +875,53 @@
           }
         },
         {
+          "name": "✅ 6.3c 等待活动开始（轮询至 startTime 到达）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var url=pm.collectionVariables.get('base_url')+'/api/seckill/activity/'+pm.collectionVariables.get('activityId');",
+                  "var tok=pm.collectionVariables.get('adminToken');",
+                  "var MAX=20,DELAY=1000;",
+                  "(function poll(n){",
+                  "if(n>MAX){console.log('等待超时，继续执行...');return;}",
+                  "pm.sendRequest({url:url,method:'GET',header:{'Authorization':'Bearer '+tok}},",
+                  "function(e,r){",
+                  "if(e){setTimeout(function(){poll(n+1)},DELAY);return;}",
+                  "var act=r.json().data;",
+                  "if(act&&act.startTime){",
+                  "var st=new Date(act.startTime.replace(' ','T'));",
+                  "var now=new Date();",
+                  "if(now>=st){console.log('活动已开始（'+(n-1)+'s 等待），proceed');}",
+                  "else{var w=Math.ceil((st-now)/1000);console.log('等待中...还需约'+w+'秒');setTimeout(function(){poll(n+1)},Math.min(DELAY,w*1000));}",
+                  "}else{setTimeout(function(){poll(n+1)},DELAY);}",
+                  "});})(1);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/seckill/activity/{{activityId}}",
+              "path": [
+                "api",
+                "seckill",
+                "activity",
+                "{{activityId}}"
+              ]
+            }
+          }
+        },
+        {
           "name": "✅ 6.4 用户秒杀抢购",
           "event": [
             {
@@ -928,7 +975,7 @@
                   "var tok=pm.collectionVariables.get('token');",
                   "var uid=pm.collectionVariables.get('userId');",
                   "var aid=Number(pm.collectionVariables.get('activityId'));",
-                  "var MAX=5,DELAY=2000;",
+                  "var MAX=10,DELAY=2000;",
                   "(function poll(n){",
                   "if(n>MAX){pm.expect.fail('轮询'+MAX+'次后仍未找到秒杀订单');return;}",
                   "pm.sendRequest({url:url,method:'GET',",
