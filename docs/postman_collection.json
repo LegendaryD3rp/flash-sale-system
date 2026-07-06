@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "【v4】闪购秒杀系统 · 全链路E2E测试",
-    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约50-70秒（含秒杀等待10s+轮询30s）\n\n━ 并发测试（Newman）━\n项目已预置 CSV 数据文件 docs/newman_concurrent.csv（10个用户，路径相对于项目根目录）：\n   username,password,productIdx\n   con_user_1,w123456,0\n   con_user_2,w123456,1\n   con_user_3,w123456,2\n   con_user_4,w123456,0\n   con_user_5,w123456,1\n   con_user_6,w123456,2\n   con_user_7,w123456,0\n   con_user_8,w123456,1\n   con_user_9,w123456,2\n   con_user_10,w123456,0\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀（含轮询+Redis验证）\" --iteration-count 10 -d docs/newman_concurrent.csv\n\n━ WebSocket 推送说明 ━\n6.5 通过轮询 /api/order/list 间接验证 WebSocket 推送结果。\n如需直接连接 WebSocket 端点（Gateway → order-service）：\n   ws://localhost:8080/ws/{userId}\n连接后可实时观察订单状态推送。\n\n━ 数据清理 ━\n测试最后自动：结束秒杀活动 + 清空购物车 + 删除地址 + 禁用测试用户。\n订单为不可变记录（系统无 DELETE 端点），建议定期通过数据库清理：\n   DELETE FROM `order` WHERE user_id IN (SELECT id FROM user WHERE username LIKE 'e2e_pm_%');\n   DELETE FROM `user` WHERE username LIKE 'e2e_pm_%';\n可设置定时任务（如 Linux cron / Windows 计划任务）每周执行一次。",
+    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约60-90秒（含秒杀等待10s+轮询40s）\n\n━ 并发测试（Newman）━\n复制以下内容保存为 newman_data.csv：\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nusername,password,productIdx\ncon_user_1,w123456,0\ncon_user_2,w123456,1\ncon_user_3,w123456,2\ncon_user_4,w123456,0\ncon_user_5,w123456,1\ncon_user_6,w123456,2\ncon_user_7,w123456,0\ncon_user_8,w123456,1\ncon_user_9,w123456,2\ncon_user_10,w123456,0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀（含轮询+Redis验证）\" --iteration-count 10 -d newman_data.csv\n\n━ WebSocket 推送说明 ━\n6.5 通过轮询 /api/order/list 间接验证 WebSocket 推送结果。\n如需直接连接 WebSocket 端点（Gateway → order-service）：\n   ws://localhost:8080/ws/{userId}\n连接后可实时观察订单状态推送。\n\n━ 数据清理 ━\n测试最后自动：结束秒杀活动 + 清空购物车 + 删除地址 + 禁用测试用户。\n订单为不可变记录（系统无 DELETE 端点），建议定期通过数据库清理：\n   DELETE FROM `order` WHERE user_id IN (SELECT id FROM user WHERE username LIKE 'e2e_pm_%');\n   DELETE FROM `user` WHERE username LIKE 'e2e_pm_%';\n可设置定时任务（如 Linux cron / Windows 计划任务）每周执行一次。",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -975,7 +975,7 @@
                   "var tok=pm.collectionVariables.get('token');",
                   "var uid=pm.collectionVariables.get('userId');",
                   "var aid=Number(pm.collectionVariables.get('activityId'));",
-                  "var MAX=15,DELAY=2000;",
+                  "var MAX=20,DELAY=2000;",
                   "(function poll(n){",
                   "if(n>MAX){pm.expect.fail('轮询'+MAX+'次后仍未找到秒杀订单');return;}",
                   "pm.sendRequest({url:url,method:'GET',",
