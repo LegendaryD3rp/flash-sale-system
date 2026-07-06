@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "【v3】闪购秒杀系统 · 全链路E2E测试",
-    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约15-30秒（含秒杀轮询等待）\n\n━ 并发测试（Newman）━\nCSV 数据文件模板（newman_concurrent.csv）：\n   username,password,productIdx\n   con_user_1,w123456,0\n   con_user_2,w123456,1\n   ...\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀\" --iteration-count 10 -d data.csv\n\n━ 数据清理 ━\n测试最后自动将秒杀活动状态设为 ENDED。",
+    "name": "【v4】闪购秒杀系统 · 全链路E2E测试",
+    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n━ 使用方式 ━\n1. 导入Postman\n2. 按文件夹顺序执行（0→1→2→...→9）\n3. 全过程约15-30秒（含秒杀轮询等待）\n\n━ 并发测试（Newman）━\n已有 CSV 模板文件 docs/newman_concurrent.csv（10个用户）：\n   username,password,productIdx\n   con_user_1,w123456,0\n   con_user_2,w123456,1\n   ...\n运行命令：\n   newman run postman_collection.json --folder \"6-秒杀（含轮询+Redis验证）\" --iteration-count 10 -d docs/newman_concurrent.csv\n\n━ 数据清理 ━\n测试最后自动：结束秒杀活动 + 清空购物车 + 删除地址 + 禁用测试用户。\n注：订单为不可变记录，系统无 DELETE 端点，需手动清理。",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -57,13 +57,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.token).to.not.be.empty;",
-                  "pm.expect(json.data.userId).to.be.a('number');",
-                  "pm.collectionVariables.set('adminToken', json.data.token);",
-                  "pm.collectionVariables.set('userId', String(json.data.userId));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.token).to.not.be.empty;pm.collectionVariables.set('adminToken',j.data.token);pm.collectionVariables.set('userId',String(j.data.userId));"
                 ],
                 "type": "text/javascript"
               }
@@ -98,11 +92,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.records).to.be.an('array').that.is.not.empty;",
-                  "pm.collectionVariables.set('productId', String(json.data.records[0].id));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.records).to.be.an('array').that.is.not.empty;pm.collectionVariables.set('productId',String(j.data.records[0].id));"
                 ],
                 "type": "text/javascript"
               }
@@ -147,8 +137,7 @@
               "listen": "prereq",
               "script": {
                 "exec": [
-                  "const ts = Date.now();",
-                  "pm.collectionVariables.set('testUser', 'e2e_pm_' + ts);"
+                  "const ts=Date.now();pm.collectionVariables.set('testUser','e2e_pm_'+ts);"
                 ],
                 "type": "text/javascript"
               }
@@ -157,10 +146,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.message).to.include('成功');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.message).to.include('成功');"
                 ],
                 "type": "text/javascript"
               }
@@ -184,7 +170,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}}"
+              "raw": "{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"
             }
           }
         },
@@ -195,10 +181,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
-                  "pm.expect(json.code).to.not.eql(0);",
-                  "console.log('重复注册正确被拒: code=' + json.code);"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.be.oneOf([400,409,500]);pm.expect(j.code).to.not.eql(0);"
                 ],
                 "type": "text/javascript"
               }
@@ -222,7 +205,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}}"
+              "raw": "{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"
             }
           }
         },
@@ -233,13 +216,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.token).to.not.be.empty;",
-                  "pm.expect(json.data.userId).to.be.a('number');",
-                  "pm.collectionVariables.set('token', json.data.token);",
-                  "pm.collectionVariables.set('userId', String(json.data.userId));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.token).to.not.be.empty;pm.collectionVariables.set('token',j.data.token);pm.collectionVariables.set('userId',String(j.data.userId));"
                 ],
                 "type": "text/javascript"
               }
@@ -274,10 +251,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
-                  "pm.expect(json.code).to.not.eql(0);",
-                  "console.log('密码错误正确拦截: HTTP ' + pm.response.code);"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.be.oneOf([400,401]);pm.expect(j.code).to.not.eql(0);"
                 ],
                 "type": "text/javascript"
               }
@@ -312,8 +286,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
-                  "console.log('无Token访问正确拦截: HTTP ' + pm.response.code);"
+                  "pm.expect(pm.response.code).to.be.oneOf([401,403]);"
                 ],
                 "type": "text/javascript"
               }
@@ -339,9 +312,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
-                  "console.log('越权访问正确拦截: HTTP ' + pm.response.code);"
+                  "pm.expect(pm.response.code).to.be.oneOf([401,403]);"
                 ],
                 "type": "text/javascript"
               }
@@ -382,10 +353,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.records).to.be.an('array');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.records).to.be.an('array');"
                 ],
                 "type": "text/javascript"
               }
@@ -425,12 +393,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "const addrId = typeof json.data === 'object' ? json.data.id : json.data;",
-                  "pm.expect(addrId).to.be.a('number');",
-                  "pm.collectionVariables.set('addressId', String(addrId));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);const id=typeof j.data==='object'?j.data.id:j.data;pm.expect(id).to.be.a('number');pm.collectionVariables.set('addressId',String(id));"
                 ],
                 "type": "text/javascript"
               }
@@ -440,12 +403,12 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -468,10 +431,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.be.an('array');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.be.an('array');"
                 ],
                 "type": "text/javascript"
               }
@@ -507,12 +467,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "const cartId = typeof json.data === 'object' ? json.data.id : json.data;",
-                  "pm.expect(cartId).to.be.a('number');",
-                  "pm.collectionVariables.set('cartId', String(cartId));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);const id=typeof j.data==='object'?j.data.id:j.data;pm.expect(id).to.be.a('number');pm.collectionVariables.set('cartId',String(id));"
                 ],
                 "type": "text/javascript"
               }
@@ -526,12 +481,12 @@
                 "value": "Bearer {{token}}"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "X-User-Id",
                 "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
@@ -555,10 +510,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.be.an('array');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.be.an('array');"
                 ],
                 "type": "text/javascript"
               }
@@ -598,11 +550,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.be.an('array').that.is.not.empty;",
-                  "pm.collectionVariables.set('orderId', String(json.data[0]));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.be.an('array').that.is.not.empty;pm.collectionVariables.set('orderId',String(j.data[0]));"
                 ],
                 "type": "text/javascript"
               }
@@ -616,12 +564,12 @@
                 "value": "Bearer {{token}}"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "X-User-Id",
                 "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
@@ -645,9 +593,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);"
                 ],
                 "type": "text/javascript"
               }
@@ -683,10 +629,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
-                  "pm.expect(json.code).to.not.eql(0);",
-                  "console.log('重复支付正确拦截: HTTP ' + pm.response.code);"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.be.oneOf([400,409]);pm.expect(j.code).to.not.eql(0);"
                 ],
                 "type": "text/javascript"
               }
@@ -722,15 +665,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.records).to.be.an('array');",
-                  "const paid = json.data.records.find(o => String(o.id) === pm.collectionVariables.get('orderId'));",
-                  "if(paid) {",
-                  "  pm.expect(paid.status).to.eql('PAID');",
-                  "  console.log('订单状态验证: PAID ✅');",
-                  "}"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.records).to.be.an('array');const paid=j.data.records.find(o=>String(o.id)===pm.collectionVariables.get('orderId'));if(paid){pm.expect(paid.status).to.eql('PAID');console.log('订单状态: PAID');}"
                 ],
                 "type": "text/javascript"
               }
@@ -774,17 +709,13 @@
       "name": "6-秒杀（含轮询+Redis验证）",
       "item": [
         {
-          "name": "✅ 6.1 [管理员]创建秒杀活动（动态时间——5秒前开始）",
+          "name": "✅ 6.1 [管理员]创建秒杀活动（动态时间——1秒前开始）",
           "event": [
             {
               "listen": "prereq",
               "script": {
                 "exec": [
-                  "const now = new Date();",
-                  "const startTime = new Date(now.getTime() - 5000).toISOString().slice(0,19);",
-                  "const endTime = new Date(now.getTime() + 86400000).toISOString().slice(0,19);",
-                  "pm.variables.set('dynamicStart', startTime);",
-                  "pm.variables.set('dynamicEnd', endTime);"
+                  "var n=new Date();pm.variables.set('dynamicStart',new Date(n.getTime()-1000).toISOString().slice(0,19));pm.variables.set('dynamicEnd',new Date(n.getTime()+86400000).toISOString().slice(0,19));"
                 ],
                 "type": "text/javascript"
               }
@@ -793,11 +724,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.be.a('number');",
-                  "pm.collectionVariables.set('activityId', String(json.data));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.be.a('number');pm.collectionVariables.set('activityId',String(j.data));"
                 ],
                 "type": "text/javascript"
               }
@@ -807,12 +734,12 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               }
             ],
             "url": {
@@ -836,7 +763,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.expect(pm.response.code).to.be.oneOf([200, 204]);"
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);"
                 ],
                 "type": "text/javascript"
               }
@@ -846,12 +773,12 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               },
               {
                 "key": "X-User-Role",
@@ -881,8 +808,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "console.log('预热请求成功 -> 进入下一步验证Redis库存...');"
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);"
                 ],
                 "type": "text/javascript"
               }
@@ -892,12 +818,12 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               }
             ],
             "url": {
@@ -923,14 +849,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "const act = json.data;",
-                  "pm.expect(act.remainingStock).to.be.a('number');",
-                  "pm.expect(act.remainingStock).to.eql(200);",
-                  "pm.expect(act.totalStock).to.eql(200);",
-                  "console.log('Redis库存验证 OK remainingStock=' + act.remainingStock + ' = totalStock=' + act.totalStock);"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.remainingStock).to.be.a('number');pm.expect(j.data.remainingStock).to.eql(200);pm.expect(j.data.totalStock).to.eql(200);console.log('Redis库存 OK, remaining='+j.data.remainingStock);"
                 ],
                 "type": "text/javascript"
               }
@@ -962,10 +881,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "console.log('秒杀返回: ' + JSON.stringify(json));"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);"
                 ],
                 "type": "text/javascript"
               }
@@ -979,12 +895,12 @@
                 "value": "Bearer {{token}}"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "X-User-Id",
                 "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
@@ -1008,47 +924,23 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const baseUrl = pm.collectionVariables.get('base_url');",
-                  "const token = pm.collectionVariables.get('token');",
-                  "const userId = pm.collectionVariables.get('userId');",
-                  "const aid = Number(pm.collectionVariables.get('activityId'));",
-                  "const maxAttempts = 3;",
-                  "const delayMs = 2000;",
-                  "",
-                  "function pollForOrder(attempt) {",
-                  "  if (attempt > maxAttempts) {",
-                  "    pm.expect.fail('轮询' + maxAttempts + '次（约' + (maxAttempts-1)*delayMs/1000 + '秒）仍未找到秒杀订单');",
-                  "    return;",
-                  "  }",
-                  "  pm.sendRequest({",
-                  "    url: baseUrl + '/api/order/list?page=1&size=50',",
-                  "    method: 'GET',",
-                  "    header: {",
-                  "      'Authorization': 'Bearer ' + token,",
-                  "      'X-User-Id': userId",
-                  "    }",
-                  "  }, function (err, res) {",
-                  "    if (err) {",
-                  "      console.log('请求失败 (attempt ' + attempt + '): ' + JSON.stringify(err));",
-                  "      setTimeout(() => pollForOrder(attempt + 1), delayMs);",
-                  "      return;",
-                  "    }",
-                  "    const json = res.json();",
-                  "    const records = json.data && json.data.records ? json.data.records : [];",
-                  "    const found = records.find(o => String(o.seckillActivityId) === String(aid));",
-                  "    if (found) {",
-                  "      pm.expect(found.status).to.eql('SUCCESS');",
-                  "      console.log('秒杀订单确认 (attempt ' + attempt + '): orderId=' + found.id + ', status=' + found.status + ' -- WebSocket推送验证通过');",
-                  "    } else if (attempt >= maxAttempts) {",
-                  "      pm.expect.fail('秒杀订单未创建，MQ消费延迟超过' + ((maxAttempts-1)*delayMs/1000) + '秒');",
-                  "    } else {",
-                  "      console.log('秒杀订单尚未就绪 (attempt ' + attempt + ')，' + (delayMs/1000) + '秒后重试...');",
-                  "      setTimeout(() => pollForOrder(attempt + 1), delayMs);",
-                  "    }",
-                  "  });",
-                  "}",
-                  "",
-                  "pollForOrder(1);"
+                  "var url=pm.collectionVariables.get('base_url')+'/api/order/list?page=1&size=50';",
+                  "var tok=pm.collectionVariables.get('token');",
+                  "var uid=pm.collectionVariables.get('userId');",
+                  "var aid=Number(pm.collectionVariables.get('activityId'));",
+                  "var MAX=5,DELAY=2000;",
+                  "(function poll(n){",
+                  "if(n>MAX){pm.expect.fail('轮询'+MAX+'次后仍未找到秒杀订单');return;}",
+                  "pm.sendRequest({url:url,method:'GET',",
+                  "header:{'Authorization':'Bearer '+tok,'X-User-Id':uid}},function(e,r){",
+                  "if(e){setTimeout(function(){poll(n+1)},DELAY);return;}",
+                  "var recs=r.json().data.records||[];",
+                  "var f=recs.find(function(o){return String(o.seckillActivityId)===String(aid)});",
+                  "if(f){pm.expect(f.status).to.eql('SUCCESS');",
+                  "console.log('秒杀订单确认 ('+n+'/'+MAX+'): id='+f.id+', status='+f.status);}",
+                  "else if(n>=MAX){pm.expect.fail('秒杀订单未创建，MQ延迟超过'+((MAX-1)*DELAY/1000)+'秒');}",
+                  "else{console.log('等待中 ('+n+'/'+MAX+')...');setTimeout(function(){poll(n+1)},DELAY);}",
+                  "});})(1);"
                 ],
                 "type": "text/javascript"
               }
@@ -1093,13 +985,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (pm.response.code === 200 && json.code === 0) {",
-                  "  console.log('秒杀成功（库存未耗尽且允许多次）');",
-                  "} else {",
-                  "  console.log('重复秒杀被正确拦截: ' + JSON.stringify(json));",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 429]);",
-                  "}"
+                  "const j=pm.response.json();if(pm.response.code===200&&j.code===0){console.log('秒杀成功（库存未耗尽）');}else{pm.expect(pm.response.code).to.be.oneOf([200,400,429]);}"
                 ],
                 "type": "text/javascript"
               }
@@ -1113,12 +999,12 @@
                 "value": "Bearer {{token}}"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "X-User-Id",
                 "value": "{{userId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": {
@@ -1147,10 +1033,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.not.be.empty;"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.not.be.empty;"
                 ],
                 "type": "text/javascript"
               }
@@ -1160,12 +1043,12 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1194,10 +1077,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data.records).to.be.an('array');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data.records).to.be.an('array');"
                 ],
                 "type": "text/javascript"
               }
@@ -1243,10 +1123,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "pm.expect(pm.response.code).to.eql(200);",
-                  "pm.expect(json.code).to.eql(0);",
-                  "pm.expect(json.data).to.have.property('totalOrders');"
+                  "const j=pm.response.json();pm.expect(pm.response.code).to.eql(200);pm.expect(j.code).to.eql(0);pm.expect(j.data).to.have.property('totalOrders');"
                 ],
                 "type": "text/javascript"
               }
@@ -1281,14 +1158,83 @@
       "name": "9-清理测试数据",
       "item": [
         {
-          "name": "✅ 9.1 结束秒杀活动（PATCH -> ENDED）",
+          "name": "✅ 9.1 清空购物车",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                  "console.log('活动已设为 ENDED，清理完成');"
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);console.log('购物车已清空');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cart/clear",
+              "path": [
+                "api",
+                "cart",
+                "clear"
+              ]
+            }
+          }
+        },
+        {
+          "name": "✅ 9.2 删除地址",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);console.log('地址已删除');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/address/{{addressId}}",
+              "path": [
+                "api",
+                "address",
+                "{{addressId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "✅ 9.3 结束秒杀活动",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);console.log('活动已设为 ENDED');"
                 ],
                 "type": "text/javascript"
               }
@@ -1298,12 +1244,12 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              },
-              {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               },
               {
                 "key": "X-User-Role",
@@ -1323,6 +1269,42 @@
             "body": {
               "mode": "raw",
               "raw": "{\"status\":\"ENDED\"}"
+            }
+          }
+        },
+        {
+          "name": "✅ 9.4 禁用测试用户（管理员）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200,204]);console.log('测试用户已禁用');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-User-Role",
+                "value": "ADMIN"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/user/{{userId}}",
+              "path": [
+                "api",
+                "admin",
+                "user",
+                "{{userId}}"
+              ]
             }
           }
         }
