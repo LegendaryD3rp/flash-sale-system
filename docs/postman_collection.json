@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "闪购秒杀系统 · 全链路E2E测试",
-    "description": "覆盖注册→登录→商品→地址→购物车→下单→支付→秒杀→AI导购全流程。导入后按文件夹顺序执行。",
+    "name": "闪购秒杀系统 · 全链路E2E测试（含异常场景）",
+    "description": "覆盖正常路径+异常场景。导入后按文件夹顺序执行。每个请求均有断言，一键运行自动判断成败。\n\n使用方式：\n1. Import to Postman\n2. 按文件夹顺序执行（0-管理员准备 → 1-用户管理 → 2-商品 → 3-地址 → 4-购物车 → 5-订单 → 6-秒杀 → 7-AI → 8-管理）\n3. 如需并发测试：newman run collection.json -d data.csv -n 10",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,7 +13,9 @@
     { "key": "cartId", "value": "" },
     { "key": "orderId", "value": "" },
     { "key": "activityId", "value": "" },
-    { "key": "adminToken", "value": "" }
+    { "key": "adminToken", "value": "" },
+    { "key": "testUser", "value": "" },
+    { "key": "testUser2", "value": "" }
   ],
   "item": [
     {
@@ -21,21 +23,21 @@
       "item": [
         {
           "name": "管理员登录",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0) {",
-                  "  pm.collectionVariables.set('adminToken', json.data.token);",
-                  "  pm.collectionVariables.set('userId', String(json.data.userId));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.token).to.not.be.empty;",
+                "pm.expect(json.data.userId).to.be.a('number');",
+                "pm.collectionVariables.set('adminToken', json.data.token);",
+                "pm.collectionVariables.set('userId', String(json.data.userId));"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
@@ -44,21 +46,20 @@
           }
         },
         {
-          "name": "获取商品列表",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0 && json.data.records.length > 0) {",
-                  "  pm.collectionVariables.set('productId', String(json.data.records[0].id));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "获取商品列表（取第一个商品ID）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.records).to.be.an('array').that.is.not.empty;",
+                "pm.collectionVariables.set('productId', String(json.data.records[0].id));"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "GET",
             "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
@@ -68,76 +69,187 @@
       ]
     },
     {
-      "name": "1-用户注册登录",
+      "name": "1-用户管理",
       "item": [
         {
-          "name": "注册新用户",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0) console.log('注册成功');",
-                  "pm.collectionVariables.set('tmpUser', 'e2e_test_' + Date.now());"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 1.1 注册新用户（正常）",
+          "event": [{
+            "listen": "prereq",
+            "script": {
+              "exec": ["const ts = Date.now();", "pm.collectionVariables.set('testUser', 'e2e_pm_' + ts);", "pm.collectionVariables.set('testUser2', 'e2e_pm2_' + ts);"],
+              "type": "text/javascript"
             }
-          ],
+          },{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.message).to.include('成功');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\"username\":\"{{tmpUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"},
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"},
             "url": {"raw": "{{base_url}}/api/user/register", "host": ["{{base_url}}"], "path": ["api","user","register"]}
           }
         },
         {
-          "name": "登录",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0) {",
-                  "  pm.collectionVariables.set('token', json.data.token);",
-                  "  pm.collectionVariables.set('userId', String(json.data.userId));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "❌ 1.2 重复注册（异常）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+                "pm.expect(json.code).to.not.eql(0);",
+                "console.log('重复注册正确被拒: code=' + json.code);"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\"username\":\"{{tmpUser}}\",\"password\":\"w123456\"}"},
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{testUser}}\",\"password\":\"w123456\",\"role\":\"CUSTOMER\"}"},
+            "url": {"raw": "{{base_url}}/api/user/register", "host": ["{{base_url}}"], "path": ["api","user","register"]}
+          }
+        },
+        {
+          "name": "✅ 1.3 登录（正常）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.token).to.not.be.empty;",
+                "pm.expect(json.data.userId).to.be.a('number');",
+                "pm.collectionVariables.set('token', json.data.token);",
+                "pm.collectionVariables.set('userId', String(json.data.userId));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{testUser}}\",\"password\":\"w123456\"}"},
             "url": {"raw": "{{base_url}}/api/user/login", "host": ["{{base_url}}"], "path": ["api","user","login"]}
+          }
+        },
+        {
+          "name": "❌ 1.4 登录失败-密码错误（异常）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+                "pm.expect(json.code).to.not.eql(0);",
+                "console.log('密码错误正确拦截: HTTP ' + pm.response.code);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"{{testUser}}\",\"password\":\"wrong_password\"}"},
+            "url": {"raw": "{{base_url}}/api/user/login", "host": ["{{base_url}}"], "path": ["api","user","login"]}
+          }
+        },
+        {
+          "name": "❌ 1.5 越权-无Token访问（异常）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                "console.log('无Token访问正确拦截: HTTP ' + pm.response.code);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/api/order/list", "host": ["{{base_url}}"], "path": ["api","order","list"]}
+          }
+        },
+        {
+          "name": "❌ 1.6 越权-普通用户调管理员接口",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                "console.log('越权访问正确拦截: HTTP ' + pm.response.code);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Role", "value": "CUSTOMER"}
+            ],
+            "url": {"raw": "{{base_url}}/api/admin/order/list", "host": ["{{base_url}}"], "path": ["api","admin","order","list"]}
           }
         }
       ]
     },
     {
-      "name": "2-地址管理",
+      "name": "2-商品浏览",
       "item": [
         {
-          "name": "添加地址",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0) {",
-                  "  const addrId = typeof json.data === 'object' ? json.data.id : json.data;",
-                  "  pm.collectionVariables.set('addressId', String(addrId));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 2.1 获取商品列表",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.records).to.be.an('array');"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/api/product?page=1&size=5", "host": ["{{base_url}}"], "path": ["api","product"], "query": [{"key":"page","value":"1"},{"key":"size","value":"5"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "3-地址管理",
+      "item": [
+        {
+          "name": "✅ 3.1 添加地址",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "const addrId = typeof json.data === 'object' ? json.data.id : json.data;",
+                "pm.expect(addrId).to.be.a('number');",
+                "pm.collectionVariables.set('addressId', String(addrId));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -149,7 +261,19 @@
           }
         },
         {
-          "name": "查询地址列表",
+          "name": "✅ 3.2 查询地址列表",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.be.an('array');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
@@ -159,25 +283,24 @@
       ]
     },
     {
-      "name": "3-购物车",
+      "name": "4-购物车",
       "item": [
         {
-          "name": "添加商品到购物车",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0) {",
-                  "  const cartId = typeof json.data === 'object' ? json.data.id : json.data;",
-                  "  pm.collectionVariables.set('cartId', String(cartId));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 4.1 添加商品到购物车",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "const cartId = typeof json.data === 'object' ? json.data.id : json.data;",
+                "pm.expect(cartId).to.be.a('number');",
+                "pm.collectionVariables.set('cartId', String(cartId));"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -190,7 +313,19 @@
           }
         },
         {
-          "name": "查看购物车列表",
+          "name": "✅ 4.2 查看购物车列表",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.be.an('array');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [
@@ -203,24 +338,23 @@
       ]
     },
     {
-      "name": "4-普通订单",
+      "name": "5-普通订单",
       "item": [
         {
-          "name": "创建订单",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0 && json.data && json.data.length > 0) {",
-                  "  pm.collectionVariables.set('orderId', String(json.data[0]));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 5.1 创建订单",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.be.an('array').that.is.not.empty;",
+                "pm.collectionVariables.set('orderId', String(json.data[0]));"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -233,7 +367,18 @@
           }
         },
         {
-          "name": "支付订单",
+          "name": "✅ 5.2 支付订单",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -244,7 +389,47 @@
           }
         },
         {
-          "name": "查询订单列表",
+          "name": "❌ 5.3 重复支付（异常）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
+                "pm.expect(json.code).to.not.eql(0);",
+                "console.log('重复支付正确拦截: HTTP ' + pm.response.code);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/order/{{orderId}}/pay", "host": ["{{base_url}}"], "path": ["api","order","{{orderId}}","pay"]}
+          }
+        },
+        {
+          "name": "✅ 5.4 查询订单列表",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.records).to.be.an('array');",
+                "const paid = json.data.records.find(o => String(o.id) === pm.collectionVariables.get('orderId'));",
+                "if(paid) {",
+                "  pm.expect(paid.status).to.eql('PAID');",
+                "  console.log('订单状态验证: PAID ✅');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [
@@ -257,36 +442,59 @@
       ]
     },
     {
-      "name": "5-秒杀全流程",
+      "name": "6-秒杀",
       "item": [
         {
-          "name": "管理员建秒杀活动",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json.code === 0 && json.data) {",
-                  "  pm.collectionVariables.set('activityId', String(json.data));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 6.1 [管理员]创建秒杀活动（动态时间）",
+          "event": [{
+            "listen": "prereq",
+            "script": {
+              "exec": [
+                "const now = new Date();",
+                "const startTime = new Date(now.getTime() - 60000).toISOString().slice(0,19);",
+                "const endTime = new Date(now.getTime() + 86400000).toISOString().slice(0,19);",
+                "pm.variables.set('dynamicStart', startTime);",
+                "pm.variables.set('dynamicEnd', endTime);"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          },{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.be.a('number');",
+                "pm.collectionVariables.set('activityId', String(json.data));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [
               {"key": "Authorization", "value": "Bearer {{adminToken}}"},
               {"key": "Content-Type", "value": "application/json"}
             ],
-            "body": {"mode": "raw", "raw": "{\"productId\":{{productId}},\"seckillPrice\":9900,\"totalStock\":200,\"startTime\":\"2026-01-01T00:00:00\",\"endTime\":\"2027-01-01T00:00:00\"}"},
+            "body": {
+              "mode": "raw",
+              "raw": "{\"productId\":{{productId}},\"seckillPrice\":9900,\"totalStock\":200,\"startTime\":\"{{dynamicStart}}\",\"endTime\":\"{{dynamicEnd}}\"}"
+            },
             "url": {"raw": "{{base_url}}/api/seckill/activity", "host": ["{{base_url}}"], "path": ["api","seckill","activity"]}
           }
         },
         {
-          "name": "启用活动并预热",
+          "name": "✅ 6.2 启用活动并预热到Redis",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.expect(pm.response.code).to.be.oneOf([200, 204]);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "PATCH",
             "header": [
@@ -294,12 +502,21 @@
               {"key": "Content-Type", "value": "application/json"},
               {"key": "X-User-Role", "value": "ADMIN"}
             ],
-            "body": {"mode": "raw", "raw": "{\"status\":\"PENDING\"}"},
+            "body": {"mode": "raw", "raw": "{\"status\":\"ACTIVE\"}"},
             "url": {"raw": "{{base_url}}/api/seckill/activity/{{activityId}}/status", "host": ["{{base_url}}"], "path": ["api","seckill","activity","{{activityId}}","status"]}
           }
         },
         {
-          "name": "预热(缓存库存到Redis)",
+          "name": "✅ 6.3 预热（库存写入Redis）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.expect(pm.response.code).to.be.oneOf([200, 204]);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -311,19 +528,19 @@
           }
         },
         {
-          "name": "用户秒杀抢购",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "console.log('秒杀结果:', JSON.stringify(json));"
-                ],
-                "type": "text/javascript"
-              }
+          "name": "✅ 6.4 用户秒杀抢购",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "console.log('秒杀返回: ' + JSON.stringify(json));"
+              ],
+              "type": "text/javascript"
             }
-          ],
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -336,7 +553,27 @@
           }
         },
         {
-          "name": "查询秒杀订单(WebSocket推送结果)",
+          "name": "✅ 6.5 查询订单列表（验证WebSocket推送结果）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "const aid = Number(pm.collectionVariables.get('activityId'));",
+                "const found = json.data.records.find(o => o.seckillActivityId === aid);",
+                "if (found) {",
+                "  pm.expect(found.status).to.eql('SUCCESS');",
+                "  console.log('WebSocket推送验证 ✅ 秒杀订单已创建, status=SUCCESS');",
+                "} else {",
+                "  console.log('秒杀订单尚未落库，MQ异步处理中，请稍后重试');",
+                "  pm.expect.fail('秒杀订单未找到，MQ可能延迟');",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [
@@ -345,14 +582,54 @@
             ],
             "url": {"raw": "{{base_url}}/api/order/list?page=1&size=50", "host": ["{{base_url}}"], "path": ["api","order","list"], "query": [{"key":"page","value":"1"},{"key":"size","value":"50"}]}
           }
+        },
+        {
+          "name": "❌ 6.6 库存不足秒杀（异常—重复秒杀同一活动）",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "if (pm.response.code === 200 && json.code === 0) {",
+                "  console.log('秒杀成功（库存未耗尽）');",
+                "} else {",
+                "  console.log('秒杀被正确拦截: ' + JSON.stringify(json));",
+                "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 429]);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-User-Id", "value": "{{userId}}"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"activityId\":{{activityId}}}"},
+            "url": {"raw": "{{base_url}}/api/seckill/flash", "host": ["{{base_url}}"], "path": ["api","seckill","flash"]}
+          }
         }
       ]
     },
     {
-      "name": "6-AI智能导购",
+      "name": "7-AI智能导购",
       "item": [
         {
-          "name": "AI商品咨询",
+          "name": "✅ 7.1 AI商品咨询",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.not.be.empty;"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "POST",
             "header": [
@@ -366,10 +643,22 @@
       ]
     },
     {
-      "name": "7-管理员功能",
+      "name": "8-管理员功能",
       "item": [
         {
-          "name": "查看所有订单(管理员)",
+          "name": "✅ 8.1 管理员查看所有订单",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data.records).to.be.an('array');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [
@@ -380,7 +669,19 @@
           }
         },
         {
-          "name": "查看系统统计数据",
+          "name": "✅ 8.2 查看系统统计数据",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "pm.expect(pm.response.code).to.eql(200);",
+                "pm.expect(json.code).to.eql(0);",
+                "pm.expect(json.data).to.have.property('totalOrders');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
           "request": {
             "method": "GET",
             "header": [
