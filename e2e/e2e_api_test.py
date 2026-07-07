@@ -718,15 +718,24 @@ def e2e_coupon_flow():
     """
     if not state.admin_token or not state.user_token: return SKIP, "无token"
     ts = str(int(time.time()))
-    # 1. admin建优惠券
+    # 1. admin建优惠券（后端返回Result<Void>不含ID，建完从列表拿）
+    cp_name = f"测试券_{ts}"
     c, d, _ = api("POST", "/api/admin/coupon", json={
-        "name": f"测试券_{ts}", "type": "FULL_REDUCTION",
+        "name": cp_name, "type": "FULL_REDUCTION",
         "discount": 1000, "minAmount": 5000, "stock": 100,
         "startTime": "2026-01-01T00:00:00", "endTime": "2027-01-01T00:00:00"
     }, token=state.admin_token)
     if c != 200 or d.get("code") != 0: return SKIP, f"建券: {d.get('message','')}"
-    cid = d.get("data", 0)
-    if not cid: return SKIP, "无券ID"
+    # 从admin列表拿到最新建的券ID
+    c, d, _ = api("GET", "/api/admin/coupon/list", params={"page":1,"size":50}, token=state.admin_token)
+    if c != 200 or d.get("code") != 0: return SKIP, "查券列表失败"
+    records = d.get("data",{}).get("records",[])
+    cid = None
+    for r in records:
+        if r.get("name") == cp_name:
+            cid = r["id"]
+            break
+    if not cid: return SKIP, "未找到新建券ID"
     # 2. 用户领券
     c, d, _ = api("POST", f"/api/coupon/claim/{cid}", token=state.user_token)
     if c != 200 or d.get("code") != 0: return FAIL, f"领券: {d.get('message','')}"
@@ -760,7 +769,7 @@ def e2e_coupon_flow():
     total_amount = 0
     _, d3, _ = api("GET", "/api/cart/listByIds?ids=" + ",".join(str(i) for i in cart_ids), token=state.user_token)
     for ci in d3.get("data", []):
-        total_amount += ci.get("price", 0) * ci.get("quantity", 1)
+        total_amount += ci.get("productPrice", 0) * ci.get("quantity", 1)
     c, d, _ = api("POST", "/api/coupon/calc-discount", json={"userCouponId": userCouponId, "amount": total_amount}, token=state.user_token)
     if c != 200 or d.get("code") != 0: return FAIL, f"计算折扣: {d.get('message','')}"
     return PASS, "建券->领券->查券->折扣计算，通过"
