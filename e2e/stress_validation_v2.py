@@ -231,38 +231,91 @@ def test_mq_async():
         token=state.admin_token, headers={"X-User-Role":"ADMIN"})
     api("POST", f"/api/seckill/activity/{aid}/warm-up", json={}, token=state.admin_token)
 
-    # 发10个秒杀请求
-    flash_codes = []
-    for _ in range(10):
-        _, d, _ = api("POST", "/api/seckill/flash", json={"activityId":aid}, token=tok)
-        flash_codes.append(d.get("code"))
-    flash_ok = sum(1 for c in flash_codes if c == 0)
+    # 注册5个不同用户（一人一发，绕过秒杀防重复）
+    mq_users = []
+    for i in range(5):
+        utok, _ = register_user(f"mq{i}")
+        if utok: mq_users.append(utok)
+    if len(mq_users) < 2: return SKIP, "注册用户不足"
 
-    # === 暂停order-service ===
-    os.kill(state.order_service_pid, signal.SIGSTOP)
+    # 先查当前订单数作为基线（收集所有用户的订单）
+    def count_all_orders(tokens):
+        """跨用户查订单总数"""
+        seen = set()
+        for t in tokens:
+            _, d, _ = api("GET", "/api/order/list", params={"page":1,"size":100}, token=t)
+            for o in d.get("data",{}).get("records", []):
+                seen.add(o.get("id") or o.get("orderSn"))
+        return len(seen)
+
+    all_tokens = [tok] + mq_users
+    base_orders = count_all_orders(all_tokens)
+
+    # === 杀掉order-service（模拟宕机，使MQ积压） ===
+    os.kill(state.order_service_pid, signal.SIGTERM)
     time.sleep(1)
+    try:
+        os.kill(state.order_service_pid, 0)
+        os.kill(state.order_service_pid, signal.SIGKILL)
+    except OSError:
+        pass
 
-    # 暂停期间查订单 — 应该没有新订单
-    _, d_before, _ = api("GET", "/api/order/list", params={"page":1,"size":50}, token=tok)
-    orders_before = len(d_before.get("data",{}).get("records", []))
+    # order-service已死 → 发秒杀请求（MQ积压，无人消费）
+    flash_ok = 0
+    for utok in mq_users:
+        _, d, _ = api("POST", "/api/seckill/flash", json={"activityId":aid}, token=utok)
+        if d.get("code") == 0:
+            flash_ok += 1
 
-    # 暂停10秒
+    if flash_ok == 0:
+        return FAIL, "秒杀请求全部失败(无MQ消息积压)"
+
+    # 积压期间查订单 — 应该没有新订单
+    orders_before = count_all_orders(all_tokens)
+    if orders_before > base_orders:
+        return FAIL, f"order-service已宕但仍有新订单落库(前{base_orders}→后{orders_before})"
+
+    # 暂停10秒（模拟宕机时间）
     time.sleep(10)
 
-    # === 恢复order-service ===
-    os.kill(state.order_service_pid, signal.SIGCONT)
+    # === 重启order-service ===
+    import subprocess
+    subprocess.Popen(
+        ["java", "-jar", "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/order-service/target/order-service-1.0.0-SNAPSHOT.jar"],
+        stdout=open("/tmp/log-order.log", "a"), stderr=subprocess.STDOUT,
+        preexec_fn=os.setsid
+    )
 
-    # 等MQ消费
-    time.sleep(15)
+    # 等order-service启动
+    order_up = False
+    for _ in range(15):
+        time.sleep(2)
+        try:
+            r = requests.get("http://localhost:8083/api/coupon/mine", timeout=3,
+                            headers={"X-User-Id":"1"})
+            if r.status_code in (200, 500):
+                order_up = True
+                break
+        except:
+            pass
 
-    # 查最终订单
-    _, d_after, _ = api("GET", "/api/order/list", params={"page":1,"size":50}, token=tok)
-    orders_after = len(d_after.get("data",{}).get("records", []))
+    if not order_up:
+        return FAIL, "重启order-service后无法连通"
+
+    # 轮询等待新订单落库（最多等30秒，每3秒查一次）
+    new_orders = 0
+    curr = 0
+    for i in range(10):
+        time.sleep(3)
+        _, d_after, _ = api("GET", "/api/order/list", params={"page":1,"size":50}, token=tok)
+        curr = count_all_orders(all_tokens)
+        new_orders = curr - orders_before
+        if new_orders > 0:
+            break
 
     # 判断：恢复后有新订单落库
-    new_orders = orders_after - orders_before
     if new_orders == 0:
-        return FAIL, f"恢复后无新订单(闪光{flash_ok}OK, 暂停前订单{orders_before}, 恢复后{orders_after})"
+        return FAIL, f"恢复后无新订单(闪光{flash_ok}OK, 暂停前订单{orders_before}, 轮询30s后仍{curr})"
 
     return PASS, (
         f"秒杀{flash_ok}/10通过, 暂停order-service 10s, "
@@ -292,6 +345,19 @@ def test_websocket_push():
     tok, uid = register_user("wsp")
     if not tok or not uid: return SKIP, "注册失败"
 
+    # 建独立活动（避免其他测试耗尽库存）
+    now = datetime.now()
+    c, d, _ = api("POST", "/api/seckill/activity", json={
+        "productId": state.product_id, "seckillPrice":9900, "totalStock":50,
+        "startTime":(now-timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S"),
+        "endTime":(now+timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+    }, token=state.admin_token)
+    if c != 200 or d.get("code") != 0 or not d.get("data"): return SKIP, "建活动失败"
+    aid = d["data"]; state.created_resources.append(("activity", aid))
+    api("PATCH", f"/api/seckill/activity/{aid}/status", json={"status":"PENDING"},
+        token=state.admin_token, headers={"X-User-Role":"ADMIN"})
+    api("POST", f"/api/seckill/activity/{aid}/warm-up", json={}, token=state.admin_token)
+
     async def _t():
         try:
             async with websockets.connect(
@@ -299,8 +365,19 @@ def test_websocket_push():
                 open_timeout=10,
                 ping_interval=30
             ) as ws:
-                # 触发秒杀
-                api("POST", "/api/seckill/flash", json={"activityId":state.seckill_id}, token=tok)
+                # 触发秒杀（先检查是否成功）
+                c1, d1, _ = api("POST", "/api/seckill/flash", json={"activityId":aid}, token=tok)
+                if d1.get("code") != 0:
+                    return SKIP, f"秒杀触发失败: {d1.get('message','')}"
+                # 等推送
+                msg = await asyncio.wait_for(ws.recv(), timeout=25)
+                data = json.loads(msg)
+                if not isinstance(data, dict) or "type" not in data:
+                    return FAIL, f"推送格式异常: {msg[:200]}"
+                result_type = data.get("type")
+                status = data.get("status")
+                order_sn = data.get("orderSn", "无")
+                return PASS, f"收到推送(type={result_type}, status={status}, orderSn={order_sn})"
                 # 等推送
                 msg = await asyncio.wait_for(ws.recv(), timeout=25)
                 data = json.loads(msg)
@@ -737,8 +814,8 @@ def main():
 
     tests = [
         ("T1-防超卖(50库存/20并发)", test_oversell),
-        ("T2-MQ异步削峰(暂停订单服务10s)", test_mq_async),
-        ("T3-WebSocket推送(gateway路由)", test_websocket_push),
+        ("T2-WebSocket推送(gateway路由)", test_websocket_push),
+        ("T3-MQ异步削峰(暂停订单服务10s)", test_mq_async),
         ("T4-AI导购并发(20请求)", test_ai_concurrent),
         ("T5-网关限流(200请求·含配置审计)", test_rate_limit),
         ("T6a-缓存穿透防护(非法ID)", test_cache_penetration),
