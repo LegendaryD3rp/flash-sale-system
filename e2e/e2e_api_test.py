@@ -322,7 +322,7 @@ def t_favorite_dup():
 
 def t_favorite_check():
     if not state.user_token or not state.product_id: return SKIP, "无前置数据"
-    code, data, _ = api("GET", f"/api/product/favorite/check?ids={state.product_id}", token=state.user_token)
+    code, data, _ = api("GET", f"/api/product/favorite/check?productIds={state.product_id}", token=state.user_token)
     return assert_api(code, data, 200, 0)
 
 def t_review():
