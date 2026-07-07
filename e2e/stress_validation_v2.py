@@ -6,13 +6,32 @@
 吕芳 呈皇上
 """
 
-import requests, json, sys, time, threading, asyncio, os, signal
+import requests, json, sys, time, threading, asyncio, os, signal, subprocess as _cmd, argparse
 from datetime import datetime, timedelta
+
+# === CLI参数（优先于环境变量，环境变量优先于默认值） ===
+_parser = argparse.ArgumentParser(description="架构功能验证测试 v2.0")
+_parser.add_argument("--jar-path", help="order-service JAR路径")
+_parser.add_argument("--config-path", help="gateway application.yml路径")
+_parser.add_argument("--ws-base", help="WebSocket基础URL (e.g. ws://localhost:8080)")
+_parser.add_argument("--ws-path", default="/ws/seckill", help="WebSocket端点路径")
+_args, _ = _parser.parse_known_args()
 
 BASE = "http://localhost:8080"
 PASS, FAIL, SKIP, WARN = 1, 2, 3, 4
 totals = {"pass": 0, "fail": 0, "skip": 0}
 results = []
+
+# 可配置路径（CLI参数 > 环境变量 > 默认值）
+def _first(*candidates):
+    return next((c for c in candidates if c is not None), None)
+
+JAR_PATH = _first(_args.jar_path, os.environ.get("ORDER_JAR"),
+    "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/order-service/target/order-service-1.0.0-SNAPSHOT.jar")
+GATEWAY_CONFIG = _first(_args.config_path, os.environ.get("GATEWAY_CONFIG"),
+    "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/gateway/src/main/resources/application.yml")
+WS_BASE = _first(_args.ws_base, os.environ.get("WS_BASE"), "ws://localhost:8080")
+WS_PATH = _first(_args.ws_path, os.environ.get("WS_PATH"), "/ws/seckill")
 
 class State:
     def __init__(self):
@@ -41,9 +60,14 @@ def api(method, path, **kwargs):
 
 def run(name, fn):
     try:
-        v, msg = fn()
+        r = fn()
+        if isinstance(r, tuple) and len(r) == 3:
+            v, msg, metrics = r
+        else:
+            v, msg = r if isinstance(r, tuple) and len(r) >= 2 else (FAIL, "返回值格式异常")
+            metrics = {}
     except Exception as e:
-        v, msg = FAIL, f"异常: {type(e).__name__}: {e}"
+        v, msg, metrics = FAIL, f"异常: {type(e).__name__}: {e}", {}
     if v == PASS:
         totals["pass"] += 1; icon = "  ✅"
     elif v == SKIP:
@@ -52,7 +76,7 @@ def run(name, fn):
         totals["fail"] += 1; icon = "  ❌"
     d = f" — {msg}" if msg else ""
     print(f"{icon} {name}{d}")
-    results.append((icon, name, v, msg))
+    results.append((icon, name, v, msg, metrics))
 
 def setup():
     print("\n  >>> 初始化...", end=" ")
@@ -238,9 +262,17 @@ def test_mq_async():
         if utok: mq_users.append(utok)
     if len(mq_users) < 2: return SKIP, "注册用户不足"
 
-    # 先查当前订单数作为基线（收集所有用户的订单）
-    def count_all_orders(tokens):
-        """跨用户查订单总数"""
+    # 发秒杀请求（MQ消息入队，order-service正常消费）
+    flash_ok = 0
+    for utok in mq_users:
+        _, d, _ = api("POST", "/api/seckill/flash", json={"activityId":aid}, token=utok)
+        if d.get("code") == 0:
+            flash_ok += 1
+    if flash_ok == 0:
+        return FAIL, "秒杀请求全部失败(无MQ消息积压)"
+
+    # 查当前订单数做基线
+    def count_orders_all(tokens):
         seen = set()
         for t in tokens:
             _, d, _ = api("GET", "/api/order/list", params={"page":1,"size":100}, token=t)
@@ -249,78 +281,49 @@ def test_mq_async():
         return len(seen)
 
     all_tokens = [tok] + mq_users
-    base_orders = count_all_orders(all_tokens)
+    base_count = count_orders_all(all_tokens)
 
-    # === 杀掉order-service（模拟宕机，使MQ积压） ===
-    os.kill(state.order_service_pid, signal.SIGTERM)
+    # === SIGSTOP 暂停order-service（模拟宕机，MQ积压） ===
+    os.kill(state.order_service_pid, signal.SIGSTOP)
     time.sleep(1)
-    try:
-        os.kill(state.order_service_pid, 0)
-        os.kill(state.order_service_pid, signal.SIGKILL)
-    except OSError:
-        pass
 
-    # order-service已死 → 发秒杀请求（MQ积压，无人消费）
-    flash_ok = 0
-    for utok in mq_users:
+    # 注册5个新用户（暂停期间的秒杀，不会被防重复挡住）
+    stop_users = []
+    for i in range(5):
+        utok, _ = register_user(f"stop{i}")
+        if utok: stop_users.append(utok)
+
+    # 暂停期间发秒杀请求（MQ积压，无人消费）
+    flash_stop = 0
+    for utok in stop_users:
         _, d, _ = api("POST", "/api/seckill/flash", json={"activityId":aid}, token=utok)
         if d.get("code") == 0:
-            flash_ok += 1
+            flash_stop += 1
 
-    if flash_ok == 0:
-        return FAIL, "秒杀请求全部失败(无MQ消息积压)"
-
-    # 积压期间查订单 — 应该没有新订单
-    orders_before = count_all_orders(all_tokens)
-    if orders_before > base_orders:
-        return FAIL, f"order-service已宕但仍有新订单落库(前{base_orders}→后{orders_before})"
+    # 暂停期间查订单 — 应该没有新订单（order-service暂停中）
+    orders_after_flash = count_orders_all(all_tokens + stop_users)
+    if orders_after_flash > base_count:
+        return FAIL, f"暂停期间不应有新订单(前{base_count}→后{orders_after_flash})"
 
     # 暂停10秒（模拟宕机时间）
     time.sleep(10)
 
-    # === 重启order-service ===
-    import subprocess
-    subprocess.Popen(
-        ["java", "-jar", "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/order-service/target/order-service-1.0.0-SNAPSHOT.jar"],
-        stdout=open("/tmp/log-order.log", "a"), stderr=subprocess.STDOUT,
-        preexec_fn=os.setsid
-    )
+    # === SIGCONT 恢复order-service（消费积压MQ消息） ===
+    os.kill(state.order_service_pid, signal.SIGCONT)
+    time.sleep(3)
 
-    # 等order-service启动
-    order_up = False
-    for _ in range(15):
-        time.sleep(2)
-        try:
-            r = requests.get("http://localhost:8083/api/coupon/mine", timeout=3,
-                            headers={"X-User-Id":"1"})
-            if r.status_code in (200, 500):
-                order_up = True
-                break
-        except:
-            pass
+    # 恢复后查订单（跨用户汇总，含暂停期间的stop_users）
+    all_tokens_after = all_tokens + stop_users
+    orders_after = count_orders_all(all_tokens_after)
+    new_orders = orders_after - base_count
 
-    if not order_up:
-        return FAIL, "重启order-service后无法连通"
-
-    # 轮询等待新订单落库（最多等30秒，每3秒查一次）
-    new_orders = 0
-    curr = 0
-    for i in range(10):
-        time.sleep(3)
-        _, d_after, _ = api("GET", "/api/order/list", params={"page":1,"size":50}, token=tok)
-        curr = count_all_orders(all_tokens)
-        new_orders = curr - orders_before
-        if new_orders > 0:
-            break
-
-    # 判断：恢复后有新订单落库
     if new_orders == 0:
-        return FAIL, f"恢复后无新订单(闪光{flash_ok}OK, 暂停前订单{orders_before}, 轮询30s后仍{curr})"
+        return FAIL, (f"恢复后无新订单(闪光{flash_ok}+{flash_stop}OK, "
+                      f"基数{base_count}→恢复{orders_after})")
 
-    return PASS, (
-        f"秒杀{flash_ok}/10通过, 暂停order-service 10s, "
-        f"恢复后新落库{new_orders}单"
-    )
+    return PASS, (f"秒杀{flash_ok}+{flash_stop}通过, 暂停order-service 10s, "
+                  f"恢复后新落库{new_orders}单, "
+                  f"总订单{base_count}→{orders_after})")
 
 # ============================================================
 # T3: WebSocket推送
@@ -361,7 +364,7 @@ def test_websocket_push():
     async def _t():
         try:
             async with websockets.connect(
-                f"ws://localhost:8080/ws/seckill?userId={uid}",
+                f"{WS_BASE}{WS_PATH}?userId={uid}",
                 open_timeout=10,
                 ping_interval=30
             ) as ws:
@@ -378,20 +381,24 @@ def test_websocket_push():
                 status = data.get("status")
                 order_sn = data.get("orderSn", "无")
                 return PASS, f"收到推送(type={result_type}, status={status}, orderSn={order_sn})"
-                # 等推送
-                msg = await asyncio.wait_for(ws.recv(), timeout=25)
-                data = json.loads(msg)
-                if not isinstance(data, dict) or "type" not in data:
-                    return FAIL, f"推送格式异常: {msg[:200]}"
-                result_type = data.get("type")
-                status = data.get("status")
-                order_sn = data.get("orderSn", "无")
-                return PASS, f"收到推送(type={result_type}, status={status}, orderSn={order_sn})"
         except asyncio.TimeoutError:
             return SKIP, "25秒内未收到推送(可能是秒杀未成功, 无推送触发)"
         except Exception as e:
             return FAIL, f"WebSocket异常: {type(e).__name__}: {e}"
 
+    # asyncio.run 兜底：先检查是否已有事件循环（Jupyter等环境）
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        # 已有事件循环，用 run_until_complete
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        try:
+            return new_loop.run_until_complete(_t())
+        finally:
+            new_loop.close()
     return asyncio.run(_t())
 
 # ============================================================
@@ -461,11 +468,10 @@ def test_rate_limit():
     if not state.seckill_id: return SKIP, "缺活动"
 
     # 读取网关配置验证
-    config_path = "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/gateway/src/main/resources/application.yml"
     config_has_limit = False
     seckill_cap = 0
     try:
-        with open(config_path) as f:
+        with open(GATEWAY_CONFIG) as f:
             content = f.read()
             config_has_limit = "rate-limit" in content and "seckill-capacity" in content
             import re
@@ -555,7 +561,7 @@ def test_cache_penetration():
 #           全部返回200 → PASS
 #           任意返回500 → FAIL(缓存击穿导致DB崩溃)
 # ============================================================
-def test_cache_hotkey():
+def test_cache_breakdown():
     """
     成功定义:
       - 50并发访问同一商品
@@ -718,7 +724,7 @@ def test_jwt_sign():
 
     if errors:
         return FAIL, f"存在{len(errors)}个错误: {errors[:5]}, TPS={tps:.0f}"
-    return PASS, f"签发{n}个用户, 耗时{elapsed:.1f}s, {tps:.0f} TPS"
+    return PASS, f"签发{n}个用户, 耗时{elapsed:.1f}s, {tps:.0f} TPS", {"latency_avg_ms": round(elapsed/n*1000, 1), "tps": f"{tps:.0f} TPS"}
 
 # ============================================================
 # T8b: JWT校验TPS
@@ -749,7 +755,7 @@ def test_jwt_verify():
 
     if errors:
         return FAIL, f"校验{n}次, {len(errors)}个500, TPS={tps:.0f}"
-    return PASS, f"校验{n}次, 耗时{elapsed:.1f}s, {tps:.0f} TPS"
+    return PASS, f"校验{n}次, 耗时{elapsed:.1f}s, {tps:.0f} TPS", {"latency_avg_ms": round(elapsed/n*1000, 1), "tps": f"{tps:.0f} TPS"}
 
 # ============================================================
 # T9: 全链路混合流量
@@ -819,7 +825,7 @@ def main():
         ("T4-AI导购并发(20请求)", test_ai_concurrent),
         ("T5-网关限流(200请求·含配置审计)", test_rate_limit),
         ("T6a-缓存穿透防护(非法ID)", test_cache_penetration),
-        ("T6b-热点Key并发(50次·缓存击穿)", test_cache_hotkey),
+        ("T6b-热点Key并发(50次·缓存击穿)", test_cache_breakdown),
         ("T7-数据库连接池(30线程·独立购物车)", test_db_pool),
         ("T8a-JWT签发性能(50用户)", test_jwt_sign),
         ("T8b-JWT校验性能(200次)", test_jwt_verify),
@@ -853,19 +859,34 @@ def write_report():
         },
         "details": []
     }
-    for icon, name, v, msg in results:
+    for icon, name, v, msg, metrics in results:
         status = "PASS" if v == PASS else ("SKIP" if v == SKIP else "FAIL")
         entry = {"name": name, "status": status, "message": msg}
-        # 尝试从msg中提取延迟数据（格式如 "50用户·平均12.3ms·最大45.6ms"）
-        parts = msg.split("·") if msg else []
-        for p in parts:
-            p = p.strip()
-            if "平均" in p or "avg" in p.lower():
-                entry["latency_avg_ms"] = p
-            if "最大" in p or "max" in p.lower():
-                entry["latency_max_ms"] = p
-            if "QPS" in p or "qps" in p.lower():
-                entry["qps"] = p
+        # 优先使用结构化metrics，fallback到msg解析
+        if metrics:
+            if "latency_avg_ms" in metrics:
+                entry["latency_avg_ms"] = metrics["latency_avg_ms"]
+            if "latency_max_ms" in metrics:
+                entry["latency_max_ms"] = metrics["latency_max_ms"]
+            if "tps" in metrics:
+                entry["tps"] = metrics["tps"]
+        else:
+            import re
+            m = re.search(r'(?:平均|avg)[=:]?\s*([\d.]+)\s*(ms|s)', msg or "", re.IGNORECASE)
+        if m:
+            val = float(m.group(1))
+            unit = m.group(2)
+            entry["latency_avg_ms"] = round(val * 1000 if unit == "s" else val, 1)
+        # 最大延迟
+        m = re.search(r'(?:最大|max)[=:]?\s*([\d.]+)\s*(ms|s)', msg or "", re.IGNORECASE)
+        if m:
+            val = float(m.group(1))
+            unit = m.group(2)
+            entry["latency_max_ms"] = round(val * 1000 if unit == "s" else val, 1)
+        # QPS/TPS: "6 TPS" "162 TPS" "145 QPS"
+        m = re.search(r'([\d.]+)\s*(TPS|QPS|tps|qps)', msg or "")
+        if m:
+            entry["tps"] = f"{m.group(1)} {m.group(2).upper()}"
         report["details"].append(entry)
     path = os.path.join(os.path.dirname(__file__), "validation_report.json")
     with open(path, "w", encoding="utf-8") as f:

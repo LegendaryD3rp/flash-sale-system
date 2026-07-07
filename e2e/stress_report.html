@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html><head><meta charset='utf-8'>
+<style>
+  body{font-family:sans-serif;padding:20px;background:#f5f5f5;color:#333;}
+  h1{color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:8px;}
+  h2{color:#34495e;margin-top:28px;}
+  .cards{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;}
+  .card{padding:14px 22px;border-radius:8px;min-width:110px;text-align:center;}
+  .card .num{font-size:26px;font-weight:bold;}
+  .card .lbl{font-size:12px;color:#666;margin-top:2px;}
+  .green{background:#e8f5e9;} .orange{background:#fff3e0;} .blue{background:#e3f2fd;} .purple{background:#f3e5f5;} .red{background:#ffebee;} .teal{background:#e0f2f1;}
+  table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px;}
+  th,td{border:1px solid #ddd;padding:6px 10px;text-align:left;}
+  th{background:#2c3e50;color:white;}
+  tr:nth-child(even){background:#f8f9fa;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;color:white;}
+  .badge.pass{background:#27ae60;} .badge.skip{background:#f39c12;} .badge.fail{background:#e74c3c;}
+  .bar-row{display:flex;align-items:center;margin:4px 0;gap:8px;font-size:13px;}
+  .bar-lbl{width:90px;flex-shrink:0;text-align:right;}
+  .bar-track{flex:1;height:22px;background:#ecf0f1;border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;line-height:22px;padding-left:4px;font-size:11px;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-fill.red{background:#e74c3c;} .bar-fill.orange{background:#f39c12;} .bar-fill.blue{background:#3498db;} .bar-fill.teal{background:#1abc9c;}
+  .bar-val{width:70px;flex-shrink:0;font-weight:bold;}
+  .mini-bar{height:22px;background:#ecf0f1;border-radius:4px;overflow:hidden;min-width:40px;}
+  .mini-bar .bar-fill{font-size:10px;min-width:30px;}
+  .meta{color:#666;font-size:13px;}
+  .section{background:white;padding:14px 18px;border-radius:6px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+</style></head><body>
+<h1>万人同场·E2E仿真报告</h1>
+<p class="meta">运行时间: 2026-07-07 02:44:49 | 模式: seckill | 订单: 10000 | 验证: basic</p>
+
+<div class="section">
+    <div class="cards">
+      <div class="card green"><div class="num">9954</div><div class="lbl">总订单</div></div>
+      <div class="card orange"><div class="num">0</div><div class="lbl">已支付</div></div>
+      <div class="card blue"><div class="num">0</div><div class="lbl">已发货</div></div>
+      <div class="card purple"><div class="num">0</div><div class="lbl">已收货</div></div>
+      <div class="card red"><div class="num">0</div><div class="lbl">失败</div></div>
+    </div></div>
+
+<div class="section"><h2>延迟</h2>
+        <div class="bar-row"><span class="bar-lbl">秒杀平均</span><div class="bar-track"><div class="bar-fill red" style="width:90.0%"></div></div><span class="bar-val">94.6ms</span></div>
+        <div class="bar-row"><span class="bar-lbl">秒杀最大</span><div class="bar-track"><div class="bar-fill orange" style="width:90.0%"></div></div><span class="bar-val">236.9ms</span></div></div>
+
+<div class="section"><h2>错误分布</h2></div>
+
+<div class="section"><h2>验证断言</h2><table><thead><tr><th>测试项</th><th>状态</th><th>HTTP</th><th>详情</th></tr></thead><tbody><tr><td>无token访问</td><td><span class="badge pass">PASS</span></td><td>401</td><td>期望401/403, 实际401</td></tr><tr><td>假token访问</td><td><span class="badge pass">PASS</span></td><td>401</td><td>期望401/403, 实际401</td></tr><tr><td>空token访问</td><td><span class="badge pass">PASS</span></td><td>401</td><td>期望401/403, 实际401</td></tr><tr><td>负数ID商品</td><td><span class="badge pass">PASS</span></td><td>404</td><td>返回404</td></tr><tr><td>不存在ID商品</td><td><span class="badge pass">PASS</span></td><td>404</td><td>返回404</td></tr><tr><td>空body秒杀</td><td><span class="badge pass">PASS</span></td><td>400</td><td>返回400</td></tr><tr><td>非法活动ID</td><td><span class="badge pass">PASS</span></td><td>400</td><td>返回400</td></tr><tr><td>限流验证</td><td><span class="badge fail">WARN</span></td><td>429出现False</td><td>共500请求, 未触发限流(可能并发不足)</td></tr><tr><td>MQ异步验证</td><td><span class="badge skip">SKIP</span></td><td></td><td>秒杀失败: 您已抢购过该活动，不可重复抢购</td></tr><tr><td>AI聊天</td><td><span class="badge pass">PASS</span></td><td>200</td><td>回复长度=120</td></tr></tbody></table></div>
+
+<div class="section"><h2>时间序列 (吞吐量 & 延迟)</h2><table><thead><tr><th>批次</th><th>耗时</th><th>吞吐量(req/s)</th><th>平均延迟</th></tr></thead><tbody><tr><td>0-500</td><td>0.339s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:82.12495823588372%">1474.8</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:94.72361809045225%">113.1ms</div></div></td></tr><tr><td>500-1000</td><td>0.399s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:69.8296024056131%">1254.0</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:72.78056951423785%">86.9ms</div></div></td></tr><tr><td>1000-1500</td><td>0.307s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:90.65597505290121%">1628.0</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:75.54438860971524%">90.2ms</div></div></td></tr><tr><td>1500-2000</td><td>0.36s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:77.30816349259383%">1388.3</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:85.25963149078727%">101.8ms</div></div></td></tr><tr><td>2000-2500</td><td>0.393s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:70.84864684263282%">1272.3</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:96.3149078726968%">115.0ms</div></div></td></tr><tr><td>2500-3000</td><td>0.278s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:100.0%">1795.8</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:75.71189279731993%">90.4ms</div></div></td></tr><tr><td>3000-3500</td><td>0.313s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:88.85176522998105%">1595.6</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:80.06700167504187%">95.6ms</div></div></td></tr><tr><td>3500-4000</td><td>0.313s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:88.98541040204923%">1598.0</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:65.99664991624789%">78.8ms</div></div></td></tr><tr><td>4000-4500</td><td>0.413s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:67.44626350373093%">1211.2</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:77.47068676716917%">92.5ms</div></div></td></tr><tr><td>4500-5000</td><td>0.35s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:79.6525225526228%">1430.4</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:77.1356783919598%">92.1ms</div></div></td></tr><tr><td>5000-5500</td><td>0.32s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:86.93061588150128%">1561.1</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:74.45561139028476%">88.9ms</div></div></td></tr><tr><td>5500-6000</td><td>0.406s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:68.65463860118054%">1232.9</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:94.55611390284757%">112.9ms</div></div></td></tr><tr><td>6000-6500</td><td>0.311s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:89.54226528566656%">1608.0</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:71.85929648241205%">85.8ms</div></div></td></tr><tr><td>6500-7000</td><td>0.366s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:76.03296580911015%">1365.4</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:81.49078726968173%">97.3ms</div></div></td></tr><tr><td>7000-7500</td><td>0.424s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:65.6197794854661%">1178.4</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:100.0%">119.4ms</div></div></td></tr><tr><td>7500-8000</td><td>0.283s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:98.40739503285444%">1767.2</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:62.06030150753769%">74.1ms</div></div></td></tr><tr><td>8000-8500</td><td>0.299s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:93.12841073616215%">1672.4</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:74.12060301507537%">88.5ms</div></div></td></tr><tr><td>8500-9000</td><td>0.376s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:74.09511081412184%">1330.6</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:89.0284757118928%">106.3ms</div></div></td></tr><tr><td>9000-9500</td><td>0.4s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:69.54003786613208%">1248.8</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:64.48911222780569%">77.0ms</div></div></td></tr><tr><td>9500-9954</td><td>0.284s</td>
+          <td><div class="mini-bar"><div class="bar-fill blue" style="width:88.87960797416193%">1596.1</div></div></td>
+          <td><div class="mini-bar"><div class="bar-fill orange" style="width:69.93299832495812%">83.5ms</div></div></td></tr></tbody></table></div>
+
+<div class="section"><h2>库存前后对比 (减少=9954, 已购=9954)</h2><table><thead><tr><th>活动</th><th>前(剩余)</th><th>后(剩余)</th><th>已购</th><th>变化</th><th>趋势</th></tr></thead><tbody><tr><td>Xbox Series X</td><td>200</td><td>0</td>
+                  <td>200</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 200</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:100.0%">200</div></div></td></tr><tr><td>罗技 MX Mechanical</td><td>200</td><td>0</td>
+                  <td>200</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 200</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:100.0%">200</div></div></td></tr><tr><td>雷蛇 黑寡妇 V4</td><td>200</td><td>0</td>
+                  <td>200</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 200</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:100.0%">200</div></div></td></tr><tr><td>宁芝 静电容 35g</td><td>200</td><td>0</td>
+                  <td>200</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 200</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:100.0%">200</div></div></td></tr><tr><td>京东京造 JZ990</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>深入理解Java虚拟机</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Java并发编程的艺术</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Spring实战 第6版</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>系统设计与实现</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>算法导论 第4版</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>CSAPP 深入理解计算机系统</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Nintendo Switch OLED</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>PS5 光驱版</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Keychron Q1 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Steam Deck OLED</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Switch 健身环大冒险</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>PS5 DualSense 手柄</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>戴尔 U2723QE</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>LG 27GP95R</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>小米 34寸带鱼屏</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>华硕 ROG PG27UQ</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>AOC 24G2SP</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>小米 AX9000</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>华硕 AX86U Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>TP-Link XDR6088</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>vivo X100 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>MacBook Air M3</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>ThinkPad X1 Carbon Gen 11</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>ROG 幻16 2024</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>RedmiBook Pro 15</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Surface Laptop 5</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>荣耀MagicBook 14 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>戴尔XPS 15 9530</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>iPhone 15 Pro Max</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>iPhone 15</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>华为 Mate 60 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>小米14 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>OPPO Find X7 Ultra</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>华为MateBook X Pro 2024</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>三星 Galaxy S24 Ultra</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>一加 12</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>AirPods Pro 2</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Sony WH-1000XM5</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Bose QC Ultra Earbuds</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>华为 FreeBuds Pro 3</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>小米 Buds 4 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>漫步者 NeoBuds Pro 2</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Samsung Galaxy Buds2 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Beats Fit Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr><tr><td>Keychron K8 Pro</td><td>200</td><td>1</td>
+                  <td>199</td><td><span style="color:#e74c3c;font-weight:bold;">↓ 199</span></td>
+                  <td><div class="mini-bar"><div class="bar-fill red" style="width:99.5%">199</div></div></td></tr></tbody></table></div>
+<div class="section"><h2>系统资源 (CPU / 内存)</h2><div style="overflow-x:auto;">
+        <svg viewBox="0 0 800 280" style="width:100%;max-width:800px;">
+          <rect x="0" y="0" width="800" height="280" fill="none"/>
+          <!-- 网格 -->
+          <line x1="55" y1="235.0" x2="780" y2="235.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="239.0" text-anchor="end" font-size="11" fill="#666">0%</text><line x1="55" y1="194.0" x2="780" y2="194.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="198.0" text-anchor="end" font-size="11" fill="#666">22%</text><line x1="55" y1="153.0" x2="780" y2="153.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="157.0" text-anchor="end" font-size="11" fill="#666">44%</text><line x1="55" y1="112.0" x2="780" y2="112.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="116.0" text-anchor="end" font-size="11" fill="#666">66%</text><line x1="55" y1="71.0" x2="780" y2="71.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="75.0" text-anchor="end" font-size="11" fill="#666">88%</text><line x1="55" y1="30.0" x2="780" y2="30.0" stroke="#eee" stroke-width="1"/>
+                <text x="47" y="34.0" text-anchor="end" font-size="11" fill="#666">110%</text>
+          <!-- 面积填充 -->
+          <polygon points="55.0,235.0 55.0,81.8 58.5,48.6 61.9,48.6 65.4,48.6 68.8,48.6 72.3,48.6 75.7,48.6 79.2,48.6 82.6,48.6 86.1,48.6 89.5,53.1 93.0,48.6 96.4,48.6 99.9,48.6 103.3,48.6 106.8,48.6 110.2,48.6 113.7,48.6 117.1,48.6 120.6,48.6 124.0,48.6 127.5,48.6 131.0,48.6 134.4,48.6 137.9,48.6 141.3,48.6 144.8,48.6 148.2,48.6 151.7,48.6 155.1,163.2 158.6,48.6 162.0,48.6 165.5,48.6 168.9,48.6 172.4,48.6 175.8,48.6 179.3,48.6 182.7,48.6 186.2,48.6 189.6,48.6 193.1,48.6 196.5,48.6 200.0,48.6 203.5,48.6 206.9,48.6 210.4,48.6 213.8,48.6 217.3,48.6 220.7,48.6 224.2,48.6 227.6,48.6 231.1,48.6 234.5,48.6 238.0,48.6 241.4,48.6 244.9,48.6 248.3,48.6 251.8,48.6 255.2,48.6 258.7,48.6 262.1,48.6 265.6,48.6 269.0,48.6 272.5,48.6 276.0,48.6 279.4,48.6 282.9,48.6 286.3,48.6 289.8,48.6 293.2,48.6 296.7,48.6 300.1,48.6 303.6,48.6 307.0,48.6 310.5,112.2 313.9,48.6 317.4,48.6 320.8,48.6 324.3,53.1 327.7,48.6 331.2,48.6 334.6,48.6 338.1,48.6 341.5,48.6 345.0,48.6 348.5,48.6 351.9,48.6 355.4,53.1 358.8,48.6 362.3,48.6 365.7,48.6 369.2,48.6 372.6,48.6 376.1,48.6 379.5,48.6 383.0,48.6 386.4,48.6 389.9,48.6 393.3,48.6 396.8,48.6 400.2,48.6 403.7,48.6 407.1,53.1 410.6,48.6 414.0,48.6 417.5,48.6 421.0,48.6 424.4,85.0 427.9,53.3 431.3,48.6 434.8,48.6 438.2,52.9 441.7,48.6 445.1,48.6 448.6,57.8 452.0,48.6 455.5,48.6 458.9,48.6 462.4,48.6 465.8,48.6 469.3,52.9 472.7,48.6 476.2,48.6 479.6,53.1 483.1,48.6 486.5,48.6 490.0,48.6 493.5,48.6 496.9,48.6 500.4,48.6 503.8,48.6 507.3,48.6 510.7,48.6 514.2,48.6 517.6,48.6 521.1,48.6 524.5,48.6 528.0,48.6 531.4,48.6 534.9,48.6 538.3,48.6 541.8,48.6 545.2,48.6 548.7,48.6 552.1,48.6 555.6,48.6 559.0,48.6 562.5,48.6 566.0,48.6 569.4,48.6 572.9,48.6 576.3,48.6 579.8,201.6 583.2,48.6 586.7,48.6 590.1,48.6 593.6,48.6 597.0,48.6 600.5,48.6 603.9,48.6 607.4,48.6 610.8,48.6 614.3,48.6 617.7,48.6 621.2,48.6 624.6,48.6 628.1,48.6 631.5,48.6 635.0,48.6 638.5,48.6 641.9,48.6 645.4,48.6 648.8,48.6 652.3,48.6 655.7,48.6 659.2,52.7 662.6,48.6 666.1,48.6 669.5,48.6 673.0,48.6 676.4,48.6 679.9,48.6 683.3,48.6 686.8,48.6 690.2,48.6 693.7,48.6 697.1,48.6 700.6,48.6 704.0,48.6 707.5,202.4 711.0,48.6 714.4,48.6 717.9,48.6 721.3,48.6 724.8,48.6 728.2,48.6 731.7,48.6 735.1,48.6 738.6,48.6 742.0,48.6 745.5,48.6 748.9,48.6 752.4,48.6 755.8,48.6 759.3,48.6 762.7,125.0 766.2,112.2 769.6,127.8 773.1,113.9 776.5,134.2 780.0,156.5 780.0,235.0" fill="rgba(231,76,60,0.10)" />
+          <polygon points="55.0,235.0 55.0,78.8 58.5,78.6 61.9,78.5 65.4,78.5 68.8,78.5 72.3,78.3 75.7,78.3 79.2,78.3 82.6,78.3 86.1,78.3 89.5,78.3 93.0,77.9 96.4,77.9 99.9,77.7 103.3,77.7 106.8,77.7 110.2,77.7 113.7,77.7 117.1,77.7 120.6,77.7 124.0,77.7 127.5,77.7 131.0,77.7 134.4,77.7 137.9,77.7 141.3,77.7 144.8,77.7 148.2,77.7 151.7,77.3 155.1,77.5 158.6,77.3 162.0,77.3 165.5,77.3 168.9,77.3 172.4,77.3 175.8,77.3 179.3,77.3 182.7,77.3 186.2,77.5 189.6,77.5 193.1,77.5 196.5,77.5 200.0,77.5 203.5,77.5 206.9,77.5 210.4,77.5 213.8,77.5 217.3,77.3 220.7,77.3 224.2,77.3 227.6,77.3 231.1,77.3 234.5,77.3 238.0,77.5 241.4,77.5 244.9,77.3 248.3,77.3 251.8,77.3 255.2,77.3 258.7,77.3 262.1,77.3 265.6,77.3 269.0,77.3 272.5,77.3 276.0,77.5 279.4,77.3 282.9,77.3 286.3,77.3 289.8,77.3 293.2,77.3 296.7,77.5 300.1,77.5 303.6,77.5 307.0,77.5 310.5,77.3 313.9,77.3 317.4,77.7 320.8,77.7 324.3,77.7 327.7,77.7 331.2,77.5 334.6,77.5 338.1,77.5 341.5,77.3 345.0,76.8 348.5,76.8 351.9,76.8 355.4,76.8 358.8,76.8 362.3,77.5 365.7,77.5 369.2,77.5 372.6,77.5 376.1,77.5 379.5,77.5 383.0,77.5 386.4,77.5 389.9,77.5 393.3,77.5 396.8,77.5 400.2,77.5 403.7,77.5 407.1,77.5 410.6,77.5 414.0,77.5 417.5,77.5 421.0,77.5 424.4,77.5 427.9,77.5 431.3,77.5 434.8,77.5 438.2,77.5 441.7,77.5 445.1,77.5 448.6,77.5 452.0,77.5 455.5,77.5 458.9,77.5 462.4,77.5 465.8,77.5 469.3,77.5 472.7,77.5 476.2,77.5 479.6,77.5 483.1,77.5 486.5,77.5 490.0,77.5 493.5,77.5 496.9,77.5 500.4,77.5 503.8,77.5 507.3,77.5 510.7,77.5 514.2,77.5 517.6,77.5 521.1,77.5 524.5,77.5 528.0,77.5 531.4,77.5 534.9,77.5 538.3,77.5 541.8,77.5 545.2,77.5 548.7,77.2 552.1,76.2 555.6,76.2 559.0,76.2 562.5,77.9 566.0,78.1 569.4,78.1 572.9,78.1 576.3,78.1 579.8,78.1 583.2,77.9 586.7,77.9 590.1,77.9 593.6,77.7 597.0,77.7 600.5,77.7 603.9,77.7 607.4,77.7 610.8,77.7 614.3,77.7 617.7,77.7 621.2,77.7 624.6,77.7 628.1,77.7 631.5,77.7 635.0,77.7 638.5,77.7 641.9,77.7 645.4,77.7 648.8,77.7 652.3,77.7 655.7,77.7 659.2,77.7 662.6,77.7 666.1,77.7 669.5,77.7 673.0,77.7 676.4,77.7 679.9,77.7 683.3,77.7 686.8,77.7 690.2,77.7 693.7,77.7 697.1,77.7 700.6,77.7 704.0,77.7 707.5,77.5 711.0,77.7 714.4,77.5 717.9,77.5 721.3,77.5 724.8,77.5 728.2,77.5 731.7,77.5 735.1,77.5 738.6,77.3 742.0,77.2 745.5,77.2 748.9,76.8 752.4,76.4 755.8,76.4 759.3,77.2 762.7,77.2 766.2,76.4 769.6,76.2 773.1,75.3 776.5,75.1 780.0,74.7 780.0,235.0" fill="rgba(52,152,219,0.10)" />
+          <!-- CPU 折线 -->
+          <polyline points="55.0,81.8 58.5,48.6 61.9,48.6 65.4,48.6 68.8,48.6 72.3,48.6 75.7,48.6 79.2,48.6 82.6,48.6 86.1,48.6 89.5,53.1 93.0,48.6 96.4,48.6 99.9,48.6 103.3,48.6 106.8,48.6 110.2,48.6 113.7,48.6 117.1,48.6 120.6,48.6 124.0,48.6 127.5,48.6 131.0,48.6 134.4,48.6 137.9,48.6 141.3,48.6 144.8,48.6 148.2,48.6 151.7,48.6 155.1,163.2 158.6,48.6 162.0,48.6 165.5,48.6 168.9,48.6 172.4,48.6 175.8,48.6 179.3,48.6 182.7,48.6 186.2,48.6 189.6,48.6 193.1,48.6 196.5,48.6 200.0,48.6 203.5,48.6 206.9,48.6 210.4,48.6 213.8,48.6 217.3,48.6 220.7,48.6 224.2,48.6 227.6,48.6 231.1,48.6 234.5,48.6 238.0,48.6 241.4,48.6 244.9,48.6 248.3,48.6 251.8,48.6 255.2,48.6 258.7,48.6 262.1,48.6 265.6,48.6 269.0,48.6 272.5,48.6 276.0,48.6 279.4,48.6 282.9,48.6 286.3,48.6 289.8,48.6 293.2,48.6 296.7,48.6 300.1,48.6 303.6,48.6 307.0,48.6 310.5,112.2 313.9,48.6 317.4,48.6 320.8,48.6 324.3,53.1 327.7,48.6 331.2,48.6 334.6,48.6 338.1,48.6 341.5,48.6 345.0,48.6 348.5,48.6 351.9,48.6 355.4,53.1 358.8,48.6 362.3,48.6 365.7,48.6 369.2,48.6 372.6,48.6 376.1,48.6 379.5,48.6 383.0,48.6 386.4,48.6 389.9,48.6 393.3,48.6 396.8,48.6 400.2,48.6 403.7,48.6 407.1,53.1 410.6,48.6 414.0,48.6 417.5,48.6 421.0,48.6 424.4,85.0 427.9,53.3 431.3,48.6 434.8,48.6 438.2,52.9 441.7,48.6 445.1,48.6 448.6,57.8 452.0,48.6 455.5,48.6 458.9,48.6 462.4,48.6 465.8,48.6 469.3,52.9 472.7,48.6 476.2,48.6 479.6,53.1 483.1,48.6 486.5,48.6 490.0,48.6 493.5,48.6 496.9,48.6 500.4,48.6 503.8,48.6 507.3,48.6 510.7,48.6 514.2,48.6 517.6,48.6 521.1,48.6 524.5,48.6 528.0,48.6 531.4,48.6 534.9,48.6 538.3,48.6 541.8,48.6 545.2,48.6 548.7,48.6 552.1,48.6 555.6,48.6 559.0,48.6 562.5,48.6 566.0,48.6 569.4,48.6 572.9,48.6 576.3,48.6 579.8,201.6 583.2,48.6 586.7,48.6 590.1,48.6 593.6,48.6 597.0,48.6 600.5,48.6 603.9,48.6 607.4,48.6 610.8,48.6 614.3,48.6 617.7,48.6 621.2,48.6 624.6,48.6 628.1,48.6 631.5,48.6 635.0,48.6 638.5,48.6 641.9,48.6 645.4,48.6 648.8,48.6 652.3,48.6 655.7,48.6 659.2,52.7 662.6,48.6 666.1,48.6 669.5,48.6 673.0,48.6 676.4,48.6 679.9,48.6 683.3,48.6 686.8,48.6 690.2,48.6 693.7,48.6 697.1,48.6 700.6,48.6 704.0,48.6 707.5,202.4 711.0,48.6 714.4,48.6 717.9,48.6 721.3,48.6 724.8,48.6 728.2,48.6 731.7,48.6 735.1,48.6 738.6,48.6 742.0,48.6 745.5,48.6 748.9,48.6 752.4,48.6 755.8,48.6 759.3,48.6 762.7,125.0 766.2,112.2 769.6,127.8 773.1,113.9 776.5,134.2 780.0,156.5" fill="none" stroke="#e74c3c" stroke-width="2.5" stroke-linejoin="round"/>
+          <!-- MEM 折线 -->
+          <polyline points="55.0,78.8 58.5,78.6 61.9,78.5 65.4,78.5 68.8,78.5 72.3,78.3 75.7,78.3 79.2,78.3 82.6,78.3 86.1,78.3 89.5,78.3 93.0,77.9 96.4,77.9 99.9,77.7 103.3,77.7 106.8,77.7 110.2,77.7 113.7,77.7 117.1,77.7 120.6,77.7 124.0,77.7 127.5,77.7 131.0,77.7 134.4,77.7 137.9,77.7 141.3,77.7 144.8,77.7 148.2,77.7 151.7,77.3 155.1,77.5 158.6,77.3 162.0,77.3 165.5,77.3 168.9,77.3 172.4,77.3 175.8,77.3 179.3,77.3 182.7,77.3 186.2,77.5 189.6,77.5 193.1,77.5 196.5,77.5 200.0,77.5 203.5,77.5 206.9,77.5 210.4,77.5 213.8,77.5 217.3,77.3 220.7,77.3 224.2,77.3 227.6,77.3 231.1,77.3 234.5,77.3 238.0,77.5 241.4,77.5 244.9,77.3 248.3,77.3 251.8,77.3 255.2,77.3 258.7,77.3 262.1,77.3 265.6,77.3 269.0,77.3 272.5,77.3 276.0,77.5 279.4,77.3 282.9,77.3 286.3,77.3 289.8,77.3 293.2,77.3 296.7,77.5 300.1,77.5 303.6,77.5 307.0,77.5 310.5,77.3 313.9,77.3 317.4,77.7 320.8,77.7 324.3,77.7 327.7,77.7 331.2,77.5 334.6,77.5 338.1,77.5 341.5,77.3 345.0,76.8 348.5,76.8 351.9,76.8 355.4,76.8 358.8,76.8 362.3,77.5 365.7,77.5 369.2,77.5 372.6,77.5 376.1,77.5 379.5,77.5 383.0,77.5 386.4,77.5 389.9,77.5 393.3,77.5 396.8,77.5 400.2,77.5 403.7,77.5 407.1,77.5 410.6,77.5 414.0,77.5 417.5,77.5 421.0,77.5 424.4,77.5 427.9,77.5 431.3,77.5 434.8,77.5 438.2,77.5 441.7,77.5 445.1,77.5 448.6,77.5 452.0,77.5 455.5,77.5 458.9,77.5 462.4,77.5 465.8,77.5 469.3,77.5 472.7,77.5 476.2,77.5 479.6,77.5 483.1,77.5 486.5,77.5 490.0,77.5 493.5,77.5 496.9,77.5 500.4,77.5 503.8,77.5 507.3,77.5 510.7,77.5 514.2,77.5 517.6,77.5 521.1,77.5 524.5,77.5 528.0,77.5 531.4,77.5 534.9,77.5 538.3,77.5 541.8,77.5 545.2,77.5 548.7,77.2 552.1,76.2 555.6,76.2 559.0,76.2 562.5,77.9 566.0,78.1 569.4,78.1 572.9,78.1 576.3,78.1 579.8,78.1 583.2,77.9 586.7,77.9 590.1,77.9 593.6,77.7 597.0,77.7 600.5,77.7 603.9,77.7 607.4,77.7 610.8,77.7 614.3,77.7 617.7,77.7 621.2,77.7 624.6,77.7 628.1,77.7 631.5,77.7 635.0,77.7 638.5,77.7 641.9,77.7 645.4,77.7 648.8,77.7 652.3,77.7 655.7,77.7 659.2,77.7 662.6,77.7 666.1,77.7 669.5,77.7 673.0,77.7 676.4,77.7 679.9,77.7 683.3,77.7 686.8,77.7 690.2,77.7 693.7,77.7 697.1,77.7 700.6,77.7 704.0,77.7 707.5,77.5 711.0,77.7 714.4,77.5 717.9,77.5 721.3,77.5 724.8,77.5 728.2,77.5 731.7,77.5 735.1,77.5 738.6,77.3 742.0,77.2 745.5,77.2 748.9,76.8 752.4,76.4 755.8,76.4 759.3,77.2 762.7,77.2 766.2,76.4 769.6,76.2 773.1,75.3 776.5,75.1 780.0,74.7" fill="none" stroke="#3498db" stroke-width="2.5" stroke-linejoin="round"/>
+          <!-- X轴标签 -->
+          <text x="417" y="278" text-anchor="middle" font-size="11" fill="#999">时间 (秒)</text>
+          <!-- 数据点（每3个标记一个圆） -->
+          <circle cx="55.0" cy="81.8" r="2.5" fill="#e74c3c"/><circle cx="89.5" cy="53.1" r="2.5" fill="#e74c3c"/><circle cx="124.0" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="158.6" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="193.1" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="227.6" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="262.1" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="296.7" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="331.2" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="365.7" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="400.2" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="434.8" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="469.3" cy="52.9" r="2.5" fill="#e74c3c"/><circle cx="503.8" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="538.3" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="572.9" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="607.4" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="641.9" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="676.4" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="711.0" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="745.5" cy="48.6" r="2.5" fill="#e74c3c"/><circle cx="780.0" cy="156.5" r="2.5" fill="#e74c3c"/>
+          <circle cx="55.0" cy="78.8" r="2.5" fill="#3498db"/><circle cx="89.5" cy="78.3" r="2.5" fill="#3498db"/><circle cx="124.0" cy="77.7" r="2.5" fill="#3498db"/><circle cx="158.6" cy="77.3" r="2.5" fill="#3498db"/><circle cx="193.1" cy="77.5" r="2.5" fill="#3498db"/><circle cx="227.6" cy="77.3" r="2.5" fill="#3498db"/><circle cx="262.1" cy="77.3" r="2.5" fill="#3498db"/><circle cx="296.7" cy="77.5" r="2.5" fill="#3498db"/><circle cx="331.2" cy="77.5" r="2.5" fill="#3498db"/><circle cx="365.7" cy="77.5" r="2.5" fill="#3498db"/><circle cx="400.2" cy="77.5" r="2.5" fill="#3498db"/><circle cx="434.8" cy="77.5" r="2.5" fill="#3498db"/><circle cx="469.3" cy="77.5" r="2.5" fill="#3498db"/><circle cx="503.8" cy="77.5" r="2.5" fill="#3498db"/><circle cx="538.3" cy="77.5" r="2.5" fill="#3498db"/><circle cx="572.9" cy="78.1" r="2.5" fill="#3498db"/><circle cx="607.4" cy="77.7" r="2.5" fill="#3498db"/><circle cx="641.9" cy="77.7" r="2.5" fill="#3498db"/><circle cx="676.4" cy="77.7" r="2.5" fill="#3498db"/><circle cx="711.0" cy="77.7" r="2.5" fill="#3498db"/><circle cx="745.5" cy="77.2" r="2.5" fill="#3498db"/><circle cx="780.0" cy="74.7" r="2.5" fill="#3498db"/>
+          <!-- 图例 -->
+          <rect x="55" y="8" width="12" height="12" fill="#e74c3c" rx="2"/>
+          <text x="71" y="18" font-size="12" fill="#333">CPU</text>
+          <rect x="115" y="8" width="12" height="12" fill="#3498db" rx="2"/>
+          <text x="131" y="18" font-size="12" fill="#333">内存</text>
+          <text x="185" y="18" font-size="11" fill="#666">| 峰值 CPU 100.0% / MEM 86.0%</text>
+        </svg></div></div></body></html>

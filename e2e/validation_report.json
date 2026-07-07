@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "架构功能验证测试 v2.0",
-    "timestamp": "2026-07-07 19:37:54",
+    "timestamp": "2026-07-07 21:13:03",
     "total": 11,
     "passed": 11,
     "failed": 0,
@@ -15,25 +15,25 @@
       "message": "成功20/20, 库存校验: 初始50→剩余30, 订单≈5/50, 其他响应: {}"
     },
     {
-      "name": "T2-MQ异步削峰(暂停订单服务10s)",
+      "name": "T2-WebSocket推送(gateway路由)",
       "status": "PASS",
-      "message": "秒杀1/10通过, 暂停order-service 10s, 恢复后新落库1单"
+      "message": "收到推送(type=seckill_result, status=SUCCESS, orderSn=6699141630144744737)"
     },
     {
-      "name": "T3-WebSocket推送(gateway路由)",
+      "name": "T3-MQ异步削峰(暂停订单服务10s)",
       "status": "PASS",
-      "message": "收到推送(type=seckill_result, status=SUCCESS, orderSn=6563924923769782004)"
+      "message": "秒杀5+5通过, 暂停order-service 10s, 恢复后新落库5单, 总订单5→10)"
     },
     {
       "name": "T4-AI导购并发(20请求)",
       "status": "PASS",
-      "message": "20/20成功, 500=0, 其他=0, 总耗时2.2s, 平均1.92s",
-      "latency_avg_ms": "20/20成功, 500=0, 其他=0, 总耗时2.2s, 平均1.92s"
+      "message": "20/20成功, 500=0, 其他=0, 总耗时2.5s, 平均1.94s",
+      "latency_avg_ms": 1940.0
     },
     {
       "name": "T5-网关限流(200请求·含配置审计)",
       "status": "PASS",
-      "message": "无限流触发(符合预期, 限流未实现). [配置=有, 实现=有] 200=1, 409=199, 429=0, 500=0, 耗时0.4s"
+      "message": "无限流触发(请求200≤容量2000, 符合预期). [配置=有(cap=2000), 实现=有] 200=3, 409=197, 429=0, 500=0, 耗时0.3s"
     },
     {
       "name": "T6a-缓存穿透防护(非法ID)",
@@ -48,17 +48,21 @@
     {
       "name": "T7-数据库连接池(30线程·独立购物车)",
       "status": "PASS",
-      "message": "30请求: 成功30, 400=0, 其他=无, HTTP异常=无, 总耗时0.3s"
+      "message": "30请求: 成功30, 400=0, 其他=无, HTTP异常=无, 总耗时0.2s"
     },
     {
       "name": "T8a-JWT签发性能(50用户)",
       "status": "PASS",
-      "message": "签发50个用户, 耗时8.1s, 6 TPS"
+      "message": "签发50个用户, 耗时7.8s, 6 TPS",
+      "latency_avg_ms": 156.6,
+      "tps": "6 TPS"
     },
     {
       "name": "T8b-JWT校验性能(200次)",
       "status": "PASS",
-      "message": "校验200次, 耗时1.2s, 162 TPS"
+      "message": "校验200次, 耗时0.9s, 220 TPS",
+      "latency_avg_ms": 6.0,
+      "tps": "220 TPS"
     },
     {
       "name": "T9-全链路混合流量(45请求)",

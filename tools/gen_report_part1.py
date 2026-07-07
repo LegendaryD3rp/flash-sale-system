@@ -97,6 +97,8 @@ C('Client -> API Gateway(:8080) [JWT Filter + RateLimit]\n  |--- user-service(:8
 H('2.4 核心流程时序', level=2)
 B('秒杀链：'); C('Client -> Gateway -> Seckill -> Redis(原子DECR) -> MQ -> Order(落库) -> WebSocket(推送给用户)')
 B('普通购物链：'); C('Client -> Gateway -> User(注册登录) -> Order(地址/购物车/下单/支付)')
+P('网关路由映射表：')
+T(['路由前缀','目标服务','端口','说明'],[['/api/user/**,/api/address/**,/api/admin/user/**,/api/admin/audit-log/**','user-service','8081','用户、地址、管理后台用户管理'],['/api/product/**,/api/upload/**','product-service','8082','商品管理、文件上传'],['/api/seckill/**','seckill-service','8085','秒杀活动管理、秒杀抢购'],['/api/order/**,/api/admin/order/**,/api/cart/**,/api/coupon/**,/api/admin/coupon/**,/api/admin/statistics/**','order-service','8083','订单、购物车、优惠券、数据统计'],['/ws/**','order-service','8083（转发至flash-sale-common的SeckillWebSocketHandler）','WebSocket实时推送'],['/api/ai/**','ai-service','8084','AI智能导购']])
 H('2.5 安全与网关策略', level=2)
 [doc.add_paragraph(i, style='List Bullet') for i in ['JWT白名单：公开接口不校验','Gateway JWT Filter验证非白名单请求','X-User-Id Header透传','RateLimitFilter：seckill-capacity=2000, general-capacity=4000']]
 doc.add_page_break()

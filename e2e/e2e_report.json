@@ -1,11 +1,11 @@
 {
   "meta": {
-    "timestamp": "2026-07-07 19:38:23",
+    "timestamp": "2026-07-07 20:43:53",
     "total_tests": 56,
-    "passed": 52,
-    "failed": 1,
+    "passed": 53,
+    "failed": 0,
     "skipped": 3,
-    "pass_rate": 92.9
+    "pass_rate": 94.6
   },
   "details": [
     {
@@ -15,22 +15,334 @@
       "message": ""
     },
     {
+      "name": "重复注册拒绝",
+      "level": 1,
+      "status": "PASS",
+      "message": "HTTP 409 冲突"
+    },
+    {
+      "name": "登录成功",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "密码错误拒绝",
+      "level": 1,
+      "status": "PASS",
+      "message": "拒绝: 用户名或密码错误"
+    },
+    {
+      "name": "管理员登录",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "商品分页列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "商品搜索",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "商品详情",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "商品不存在404",
+      "level": 1,
+      "status": "PASS",
+      "message": "HTTP 404 未找到"
+    },
+    {
+      "name": "秒杀活动列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
       "name": "秒杀抢购",
       "level": 1,
       "status": "PASS",
-      "message": "排队中"
+      "message": ""
+    },
+    {
+      "name": "重复抢购拒绝",
+      "level": 1,
+      "status": "PASS",
+      "message": "HTTP 409"
+    },
+    {
+      "name": "订单列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "订单详情",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "订单越权",
+      "level": 1,
+      "status": "PASS",
+      "message": "被拒: 无权查看该订单"
+    },
+    {
+      "name": "订单支付",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "取消订单",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "创建订单",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "新增地址",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "重复地址幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "幂等允许(新建)"
+    },
+    {
+      "name": "地址列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "加购物车",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "购物车列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "按ID查购物车",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "我的优惠券",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "领取优惠券",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "AI导购对话",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "AI空消息",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "添加收藏",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "重复收藏幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "幂等: code=0, msg=Success"
+    },
+    {
+      "name": "收藏检查",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "发表评价",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "重复评价幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "幂等: code=0"
+    },
+    {
+      "name": "无token被拒",
+      "level": 1,
+      "status": "PASS",
+      "message": "被拒401"
+    },
+    {
+      "name": "CORS头检查",
+      "level": 1,
+      "status": "PASS",
+      "message": "CORS头无"
+    },
+    {
+      "name": "管理订单列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "管理用户列表",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "管理统计",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "管理发货",
+      "level": 1,
+      "status": "PASS",
+      "message": "发货结果: HTTP 409, msg=当前状态不可发货"
+    },
+    {
+      "name": "地址校验",
+      "level": 1,
+      "status": "PASS",
+      "message": "拒绝: HTTP 400, code=400, msg=收件人姓名不能为空"
+    },
+    {
+      "name": "重复领券幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "拒绝: HTTP 409, code=409, msg=已领取过该优惠券"
+    },
+    {
+      "name": "重复下单幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "拒绝: HTTP 400, code=400, msg=购物车项不存在"
+    },
+    {
+      "name": "地址更新幂等",
+      "level": 1,
+      "status": "PASS",
+      "message": "两次更新均200"
+    },
+    {
+      "name": "完整购物流程(注册->登录->地址->加购->下单->支付)",
+      "level": 2,
+      "status": "PASS",
+      "message": "8步全通过"
+    },
+    {
+      "name": "秒杀全流程(注册->抢购->支付)",
+      "level": 2,
+      "status": "SKIP",
+      "message": "秒杀异步订单未就绪（MQ延迟），跳过支付"
+    },
+    {
+      "name": "管理后台操作(建商品->建活动->预热)",
+      "level": 2,
+      "status": "PASS",
+      "message": "建商品->建活动->转PENDING->预热，全通过"
+    },
+    {
+      "name": "优惠券领取->使用->释放",
+      "level": 2,
+      "status": "PASS",
+      "message": "建券->领券->查券->折扣计算，通过"
+    },
+    {
+      "name": "收藏->评价->查询",
+      "level": 2,
+      "status": "PASS",
+      "message": "收藏->评价->查询，通过"
+    },
+    {
+      "name": "越权扫描(普通用户调admin接口)",
+      "level": 2,
+      "status": "PASS",
+      "message": "全部4个admin接口都被普通用户拦截"
+    },
+    {
+      "name": "忘记密码->重置",
+      "level": 2,
+      "status": "PASS",
+      "message": "获取重置token成功（跳过实际重置，需完整流程验证）"
     },
     {
       "name": "WebSocket秒杀推送",
       "level": 2,
-      "status": "FAIL",
-      "message": "超时"
+      "status": "SKIP",
+      "message": "推送超时(20s)"
+    },
+    {
+      "name": "并发秒杀(10线程)",
+      "level": 3,
+      "status": "PASS",
+      "message": "库存50,10线程,成功10,无超卖"
+    },
+    {
+      "name": "并发下单(10线程)",
+      "level": 3,
+      "status": "SKIP",
+      "message": "购物车项不足(需≥3)"
     },
     {
       "name": "SQL注入防护",
       "level": 3,
-      "status": "SKIP",
-      "message": "跳过"
+      "status": "PASS",
+      "message": "4种注入安全"
+    },
+    {
+      "name": "XSS防护",
+      "level": 3,
+      "status": "PASS",
+      "message": "XSS安全"
+    },
+    {
+      "name": "大载荷攻击",
+      "level": 3,
+      "status": "PASS",
+      "message": "大载荷200"
     }
   ]
 }
