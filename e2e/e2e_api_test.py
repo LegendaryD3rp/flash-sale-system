@@ -19,7 +19,7 @@ FlashSaleAI 自动化测试脚本 v3.1
   python3 /tmp/api_test_v2.py
 """
 
-import requests, json, sys, time, threading, asyncio
+import requests, json, sys, time, threading, asyncio, os
 from datetime import datetime, timedelta
 
 BASE = "http://localhost:8080"
@@ -1119,7 +1119,38 @@ def main():
     print(f"  结果: ✅ {t['pass']} 通过, ❌ {t['fail']} 失败, ⏭ {t['skip']} 跳过 (共 {total} 个)")
     print(f"  完成: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*70)
+    write_report(t)
     sys.exit(1 if t['fail'] > 0 else 0)
+
+def write_report(t):
+    """生成 e2e_report.json 量化报告"""
+    total = t['pass'] + t['fail'] + t['skip']
+    report = {
+        "meta": {
+            "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+            "total_tests": total,
+            "passed": t['pass'],
+            "failed": t['fail'],
+            "skipped": t['skip'],
+            "pass_rate": round(t['pass'] / total * 100, 1) if total else 0
+        },
+        "details": []
+    }
+    seen = set()
+    for icon, level, name, v, msg in results:
+        status = "PASS" if v == 1 else ("SKIP" if v == 3 else "FAIL")
+        if name not in seen:
+            seen.add(name)
+            report["details"].append({
+                "name": name,
+                "level": level,
+                "status": status,
+                "message": msg
+            })
+    path = os.path.join(os.path.dirname(__file__), "e2e_report.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(f"  📊 报告已保存: {path}")
 
 if __name__ == "__main__":
     main()

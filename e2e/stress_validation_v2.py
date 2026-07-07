@@ -751,6 +751,42 @@ def main():
     print(f"  结果: ✅ {totals['pass']} 通过, ❌ {totals['fail']} 失败, ⏭️ {totals['skip']} 跳过 (共{sum(totals.values())}个)")
     print(f"  完成: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
+    write_report()
+
+def write_report():
+    """生成 validation_report.json 量化报告"""
+    t = totals
+    total = t['pass'] + t['fail'] + t['skip']
+    report = {
+        "meta": {
+            "title": "架构功能验证测试 v2.0",
+            "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+            "total": total,
+            "passed": t['pass'],
+            "failed": t['fail'],
+            "skipped": t['skip'],
+            "pass_rate": round(t['pass'] / total * 100, 1) if total else 0
+        },
+        "details": []
+    }
+    for icon, name, v, msg in results:
+        status = "PASS" if v == PASS else ("SKIP" if v == SKIP else "FAIL")
+        entry = {"name": name, "status": status, "message": msg}
+        # 尝试从msg中提取延迟数据（格式如 "50用户·平均12.3ms·最大45.6ms"）
+        parts = msg.split("·") if msg else []
+        for p in parts:
+            p = p.strip()
+            if "平均" in p or "avg" in p.lower():
+                entry["latency_avg_ms"] = p
+            if "最大" in p or "max" in p.lower():
+                entry["latency_max_ms"] = p
+            if "QPS" in p or "qps" in p.lower():
+                entry["qps"] = p
+        report["details"].append(entry)
+    path = os.path.join(os.path.dirname(__file__), "validation_report.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(f"  📊 报告已保存: {path}")
 
 
 if __name__ == "__main__":

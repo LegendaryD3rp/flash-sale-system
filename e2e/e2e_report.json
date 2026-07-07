@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "timestamp": "2026-07-07 19:38:23",
+    "total_tests": 56,
+    "passed": 52,
+    "failed": 1,
+    "skipped": 3,
+    "pass_rate": 92.9
+  },
+  "details": [
+    {
+      "name": "注册新用户",
+      "level": 1,
+      "status": "PASS",
+      "message": ""
+    },
+    {
+      "name": "秒杀抢购",
+      "level": 1,
+      "status": "PASS",
+      "message": "排队中"
+    },
+    {
+      "name": "WebSocket秒杀推送",
+      "level": 2,
+      "status": "FAIL",
+      "message": "超时"
+    },
+    {
+      "name": "SQL注入防护",
+      "level": 3,
+      "status": "SKIP",
+      "message": "跳过"
+    }
+  ]
+}
