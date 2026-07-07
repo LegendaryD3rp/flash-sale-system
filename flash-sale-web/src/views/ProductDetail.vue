@@ -3,14 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import request from '../utils/request'
-import { Star, StarFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { Star, StarFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const product = ref<any>(null)
 const seckill = ref<any>(null)
+const hasAnySeckill = ref(false)
 const loading = ref(true)
 const isFavorited = ref(false)
 
@@ -105,10 +106,11 @@ onMounted(async () => {
     await fetchReviews()
     // Try to find an active seckill for this product
     try {
-      const seckillRes: any = await request.get('/api/seckill/activity/list', { params: { page: 1, size: 20 } })
+      const seckillRes: any = await request.get('/api/seckill/activity/list', { params: { page: 1, size: 999 } })
       const list = seckillRes.records || []
       const found = list.find((a: any) => a.productId === prodId && a.status === 'ACTIVE')
       if (found) seckill.value = found
+      hasAnySeckill.value = list.some((a: any) => a.productId === prodId)
     } catch { /* no seckill for this product */ }
   } catch {
     product.value = null
@@ -119,6 +121,18 @@ onMounted(async () => {
 
 function formatPrice(price: number) {
   return '¥' + (price / 100).toFixed(2)
+}
+
+function goToCart() {
+  if (!userStore.isLoggedIn()) {
+    router.push('/login')
+    return
+  }
+  request.post('/api/cart/add', { productId: product.value?.id, quantity: 1 }).then(() => {
+    ElMessage.success('已加入购物车')
+  }).catch(() => {
+    ElMessage.warning('添加失败，请重试')
+  })
 }
 </script>
 
@@ -203,8 +217,11 @@ function formatPrice(price: number) {
         <el-button v-if="seckill" type="danger" size="large" style="width: 100%;" @click="router.push(`/seckill/${seckill.id}`)">
           ⚡ 去秒杀
         </el-button>
-        <el-button v-else type="primary" size="large" style="width: 100%;" disabled>
+        <el-button v-else-if="hasAnySeckill" type="primary" size="large" style="width: 100%;" disabled>
           暂无可购买活动
+        </el-button>
+        <el-button v-else type="primary" size="large" style="width: 100%;" @click="goToCart">
+          🛒 加入购物车
         </el-button>
       </div>
     </div>

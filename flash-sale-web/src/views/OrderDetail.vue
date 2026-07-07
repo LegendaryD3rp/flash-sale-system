@@ -61,7 +61,7 @@ function statusType(status: string) {
 
 function showPay() { return order.value?.status === 'PENDING_PAY' }
 function showCancel() { return order.value?.status === 'PENDING_PAY' }
-function showReceive() { return order.value?.status === 'SHIPPED' || order.value?.status === 'PAID' }
+function showReceive() { return order.value?.status === 'SHIPPED' }
 function showReview() {
   return (order.value?.status === 'RECEIVED' || order.value?.status === 'COMPLETED' || order.value?.status === 'SUCCESS')
     && !reviewed.value

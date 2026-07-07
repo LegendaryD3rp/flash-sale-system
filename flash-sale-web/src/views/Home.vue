@@ -18,7 +18,7 @@ const seckillActivities = ref<any[]>([])
 const selectedCategory = ref('')
 const favoritesMap = ref<Record<number, boolean>>({})
 
-const categories = ['全部', '笔记本', '耳机', '外设', '图书', '游戏机']
+const categories = ['全部', '笔记本', '手机', '耳机', '键盘', '显示器', '路由器', '书籍', '游戏', '数码']
 
 interface ProductItem {
   id: number

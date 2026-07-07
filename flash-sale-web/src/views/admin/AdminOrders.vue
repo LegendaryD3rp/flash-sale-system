@@ -36,7 +36,7 @@ function statusTag(s: string) {
   const map: Record<string, { type: string; text: string }> = {
     PENDING: { type: 'warning', text: '处理中' },
     PENDING_PAY: { type: 'warning', text: '待付款' },
-    PAID: { type: '', text: '已付款' },
+    PAID: { type: 'info', text: '已付款' },
     SHIPPED: { type: 'primary', text: '已发货' },
     RECEIVED: { type: 'success', text: '已收货' },
     COMPLETED: { type: 'success', text: '已完成' },

@@ -253,9 +253,9 @@ async function submitOrder() {
       </div>
     </template>
   </div>
+</template>
 
-  <!-- 优惠券样式 -->
-  <style scoped>
+<style scoped>
   .coupon-option {
     display: flex;
     padding: 10px;
@@ -316,4 +316,3 @@ async function submitOrder() {
     color: #e6a23c;
   }
   </style>
-</template>
