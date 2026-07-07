@@ -147,10 +147,15 @@ public class CouponServiceImpl implements CouponService {
 
         // 批量查询关联的优惠券信息
         List<UserCoupon> records = ucPage.getRecords();
-        List<Long> couponIds = records.stream().map(UserCoupon::getCouponId).collect(Collectors.toList());
-        List<Coupon> coupons = couponMapper.selectBatchIds(couponIds);
-        java.util.Map<Long, Coupon> couponMap = coupons.stream()
-                .collect(Collectors.toMap(Coupon::getId, c -> c));
+        final java.util.Map<Long, Coupon> couponMap;
+        if (!records.isEmpty()) {
+            List<Long> couponIds = records.stream().map(UserCoupon::getCouponId).collect(Collectors.toList());
+            List<Coupon> coupons = couponMapper.selectBatchIds(couponIds);
+            couponMap = coupons.stream()
+                    .collect(Collectors.toMap(Coupon::getId, c -> c));
+        } else {
+            couponMap = java.util.Collections.emptyMap();
+        }
 
         return ucPage.convert(uc -> {
             Coupon c = couponMap.get(uc.getCouponId());
