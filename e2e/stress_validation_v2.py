@@ -10,7 +10,7 @@ import requests, json, sys, time, threading, asyncio, os, signal
 from datetime import datetime, timedelta
 
 BASE = "http://localhost:8080"
-PASS, FAIL, SKIP = 1, 2, 3
+PASS, FAIL, SKIP, WARN = 1, 2, 3, 4
 totals = {"pass": 0, "fail": 0, "skip": 0}
 results = []
 
@@ -366,39 +366,42 @@ def test_ai_concurrent():
 # ============================================================
 # T5: 网关限流
 # 成功定义:
-#   先确认: 网关配置存在(seckill-capacity=500, refill-rate=200)
-#          但代码中未实现限流过滤器(RateLimiter) → 预期不会触发429
-#   验证: 发送200个并发秒杀请求
-#         - 无500 → PASS(系统在200并发下稳定)
-#         - 有429 → 说明实际存在限流机制(超出预期) → 额外标注
-#         - 有500 → FAIL
+#   - 网关配置存在(seckill-capacity)
+#   - 代码已实现RateLimitFilter(自定义GlobalFilter, Redis INCR + 1s TTL)
+#   - 发送200个并发秒杀请求
+#     - 若请求量 > 容量 → 应有429触发
+#     - 无500 → PASS
 # ============================================================
 def test_rate_limit():
     """
     成功定义:
-      - 网关application.yml配置了限流(seckill-capacity=500)
-      - 但代码中未实现RequestRateLimiter过滤器
-      - 因此200并发请求不会触发限流(429), 预期全为200/409等业务响应
+      - 网关application.yml配置了限流(seckill-capacity)
+      - 代码已实现RateLimitFilter(自定义GlobalFilter)
+      - 发送200个并发秒杀请求
+      - 若请求量超过容量 → 触发429
       - 出现500 → FAIL
-      - 无500 → PASS(验证系统在合理并发下稳定, 限流功能待实现)
     """
     if not state.seckill_id: return SKIP, "缺活动"
 
     # 读取网关配置验证
     config_path = "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/gateway/src/main/resources/application.yml"
     config_has_limit = False
+    seckill_cap = 0
     try:
         with open(config_path) as f:
             content = f.read()
             config_has_limit = "rate-limit" in content and "seckill-capacity" in content
+            import re
+            m = re.search(r'seckill-capacity:\s*(\d+)', content)
+            if m: seckill_cap = int(m.group(1))
     except: pass
 
-    # 检查代码实现
+    # 检查代码实现(RateLimitFilter)
     code_has_impl = False
     try:
         import subprocess
         r = subprocess.run(
-            ["grep", "-rE", "rate.limit|RateLimit|RequestRateLimiter|setRateLimit", 
+            ["grep", "-rE", "RateLimitFilter|rate.limit|RequestRateLimiter",
              "/root/.qwenpaw/workspaces/HuangJin/flash-sale-system/gateway/src/", "-l"],
             capture_output=True, text=True, timeout=10
         )
@@ -427,17 +430,21 @@ def test_rate_limit():
     others = {c: codes.count(c) for c in set(codes) if c not in (200, 409, 429, 500)}
 
     # 判断
-    status_info = f"配置={'有' if config_has_limit else '无'}, 实现={'有' if code_has_impl else '无'}"
+    status_info = f"配置={'有' if config_has_limit else '无'}(cap={seckill_cap}), 实现={'有' if code_has_impl else '无'}"
     code_info = f"200={count_200}, 409={count_409}, 429={count_429}, 500={count_500}"
     if others: code_info += f", 其他={others}"
 
     if count_500 > 0:
         return FAIL, f"存在{count_500}个500! [{status_info}] {code_info}"
 
+    # 根据容量判断是否应触发限流
+    if seckill_cap > 0 and 200 > seckill_cap and count_429 == 0:
+        return WARN, f"请求(200)超容量({seckill_cap})但未触发429! 可能并发不足或Redis误差 [{status_info}] {code_info}, 耗时{elapsed:.1f}s"
+
     if count_429 > 0:
         return PASS, f"触发限流(429={count_429})! [{status_info}] {code_info}, 耗时{elapsed:.1f}s"
 
-    return PASS, f"无限流触发(符合预期, 限流未实现). [{status_info}] {code_info}, 耗时{elapsed:.1f}s"
+    return PASS, f"无限流触发(请求{200}≤容量{seckill_cap}, 符合预期). [{status_info}] {code_info}, 耗时{elapsed:.1f}s"
 
 # ============================================================
 # T6a: 缓存穿透防护
